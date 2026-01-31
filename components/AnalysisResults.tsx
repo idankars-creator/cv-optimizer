@@ -8,9 +8,9 @@ import { SmartResumePreview, TemplateGallery } from "./shared";
 import parseRawCV from "@/lib/cvParser";
 import { exportToPdf } from "@/utils/exportToPdf";
 import { exportToWord } from "@/utils/exportToWord";
-import { 
-  CheckCircle2, 
-  AlertTriangle, 
+import {
+  CheckCircle2,
+  AlertTriangle,
   Sparkles,
   Target,
   Copy,
@@ -29,11 +29,34 @@ import {
   ChevronRight,
   MessageSquare,
   Camera,
-  User
+  User,
+  TrendingUp,
+  Zap,
+  BarChart3,
+  Info
 } from "lucide-react";
+
+interface ScoreBreakdown {
+  ats: number;
+  impact: number;
+  clarity: number;
+}
+
+interface ScoreComparison {
+  original: {
+    total: number;
+    breakdown: ScoreBreakdown;
+  };
+  optimized: {
+    total: number;
+    breakdown: ScoreBreakdown;
+  };
+  improvement: number;
+}
 
 interface AnalysisResult {
   overallScore: number;
+  scoreComparison?: ScoreComparison;
   summary: string;
   strengths: string[];
   improvements: string[];
@@ -322,47 +345,117 @@ export function AnalysisResults({ results, coverLetterTab, onEnhanceWithDeepDive
           <div className="space-y-8 flex-1 min-h-0 overflow-auto pr-1">
             {/* Hero Score Card - Premium Style */}
             <div className="bg-[#FAFAF8] rounded-sm p-8 border border-stone-100">
-              <div className="flex items-center justify-between gap-8">
-                <div className="flex-1">
-                  <div className="flex items-center gap-3 mb-3">
-                    <Target className="w-5 h-5 text-[#0A2647]" strokeWidth={1.5} />
-                    <h3 className="font-serif text-xl text-[#1a1a1a]">Match Analysis</h3>
+              <div className="flex items-center gap-3 mb-3">
+                <Target className="w-5 h-5 text-[#0A2647]" strokeWidth={1.5} />
+                <h3 className="font-serif text-xl text-[#1a1a1a]">Match Analysis</h3>
+              </div>
+              <p className="text-stone-600 leading-relaxed font-light">{results.summary}</p>
+            </div>
+
+            {/* Score Comparison Card - Shows improvement after optimization */}
+            {results.scoreComparison && (
+              <div className="bg-gradient-to-r from-emerald-50 to-teal-50 rounded-xl p-6 border border-emerald-200">
+                <div className="flex items-center justify-between mb-4">
+                  <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 bg-emerald-100 rounded-xl flex items-center justify-center">
+                      <TrendingUp className="w-5 h-5 text-emerald-600" />
+                    </div>
+                    <div>
+                      <h3 className="font-semibold text-slate-900">Score Improvement</h3>
+                      <p className="text-sm text-slate-600">How your CV improved after optimization</p>
+                    </div>
                   </div>
-                  <p className="text-stone-600 leading-relaxed font-light">{results.summary}</p>
-                </div>
-                
-                {/* Large Score Circle */}
-                <div className="flex-shrink-0 text-center">
-                  <div className="relative w-24 h-24">
-                    <svg className="w-full h-full -rotate-90" viewBox="0 0 100 100">
-                      <circle
-                        cx="50"
-                        cy="50"
-                        r="42"
-                        fill="white"
-                        stroke="#e2e8f0"
-                        strokeWidth="8"
-                      />
-                      <circle
-                        cx="50"
-                        cy="50"
-                        r="42"
-                        fill="none"
-                        className={scoreColors.ring}
-                        strokeWidth="8"
-                        strokeLinecap="round"
-                        strokeDasharray={`${results.overallScore * 2.64} 264`}
-                        style={{ transition: "stroke-dasharray 1s ease-out" }}
-                      />
-                    </svg>
-                    <div className="absolute inset-0 flex items-center justify-center">
-                      <span className={`text-3xl font-bold ${scoreColors.text}`}>{results.overallScore}</span>
-                </div>
+                  
+                  {/* Tooltip Trigger */}
+                  <div className="relative group">
+                    <button className="w-6 h-6 rounded-full bg-emerald-100 hover:bg-emerald-200 flex items-center justify-center transition-colors">
+                      <Info className="w-4 h-4 text-emerald-600" />
+                    </button>
+                    
+                    {/* Tooltip Content */}
+                    <div className="absolute right-0 top-8 w-64 bg-white rounded-lg shadow-lg border border-slate-200 p-4 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 z-50">
+                      <div className="absolute -top-2 right-4 w-4 h-4 bg-white border-l border-t border-slate-200 transform rotate-45"></div>
+                      <h4 className="font-semibold text-slate-900 text-sm mb-3">Detailed Breakdown</h4>
+                      <div className="space-y-3">
+                        {/* ATS Score */}
+                        <div className="flex items-center justify-between">
+                          <div className="flex items-center gap-2">
+                            <Zap className="w-4 h-4 text-blue-500" />
+                            <span className="text-xs font-medium text-slate-700">ATS</span>
+                          </div>
+                          <div className="flex items-baseline gap-1">
+                            <span className="text-slate-400 text-sm">{results.scoreComparison.original.breakdown.ats}</span>
+                            <span className="text-slate-400">→</span>
+                            <span className="text-blue-600 font-semibold">{results.scoreComparison.optimized.breakdown.ats}</span>
+                            <span className="text-xs text-emerald-500 ml-1">
+                              +{results.scoreComparison.optimized.breakdown.ats - results.scoreComparison.original.breakdown.ats}
+                            </span>
+                          </div>
+                        </div>
+
+                        {/* Impact Score */}
+                        <div className="flex items-center justify-between">
+                          <div className="flex items-center gap-2">
+                            <Target className="w-4 h-4 text-purple-500" />
+                            <span className="text-xs font-medium text-slate-700">Impact</span>
+                          </div>
+                          <div className="flex items-baseline gap-1">
+                            <span className="text-slate-400 text-sm">{results.scoreComparison.original.breakdown.impact}</span>
+                            <span className="text-slate-400">→</span>
+                            <span className="text-purple-600 font-semibold">{results.scoreComparison.optimized.breakdown.impact}</span>
+                            <span className="text-xs text-emerald-500 ml-1">
+                              +{results.scoreComparison.optimized.breakdown.impact - results.scoreComparison.original.breakdown.impact}
+                            </span>
+                          </div>
+                        </div>
+
+                        {/* Clarity Score */}
+                        <div className="flex items-center justify-between">
+                          <div className="flex items-center gap-2">
+                            <BarChart3 className="w-4 h-4 text-amber-500" />
+                            <span className="text-xs font-medium text-slate-700">Clarity</span>
+                          </div>
+                          <div className="flex items-baseline gap-1">
+                            <span className="text-slate-400 text-sm">{results.scoreComparison.original.breakdown.clarity}</span>
+                            <span className="text-slate-400">→</span>
+                            <span className="text-amber-600 font-semibold">{results.scoreComparison.optimized.breakdown.clarity}</span>
+                            <span className="text-xs text-emerald-500 ml-1">
+                              +{results.scoreComparison.optimized.breakdown.clarity - results.scoreComparison.original.breakdown.clarity}
+                            </span>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
                   </div>
-                  <p className="text-sm mt-2 text-slate-500 font-medium">Match Score</p>
+                </div>
+
+                {/* Before/After Score Comparison */}
+                <div className="grid grid-cols-3 gap-4">
+                  {/* Original Score */}
+                  <div className="bg-white rounded-lg p-4 text-center border border-slate-200">
+                    <p className="text-xs text-slate-500 uppercase tracking-wider mb-1">Original</p>
+                    <p className="text-3xl font-bold text-slate-400">{results.scoreComparison.original.total}</p>
+                  </div>
+
+                  {/* Arrow & Improvement */}
+                  <div className="flex flex-col items-center justify-center">
+                    <div className="w-8 h-8 bg-emerald-500 rounded-full flex items-center justify-center mb-1">
+                      <TrendingUp className="w-4 h-4 text-white" />
+                    </div>
+                    <span className="text-lg font-bold text-emerald-600">
+                      +{results.scoreComparison.improvement}
+                    </span>
+                    <span className="text-xs text-emerald-600">points</span>
+                  </div>
+
+                  {/* Optimized Score */}
+                  <div className="bg-emerald-500 rounded-lg p-4 text-center">
+                    <p className="text-xs text-emerald-100 uppercase tracking-wider mb-1">Optimized</p>
+                    <p className="text-3xl font-bold text-white">{results.scoreComparison.optimized.total}</p>
+                  </div>
                 </div>
               </div>
-            </div>
+            )}
 
             {/* Strengths & Areas to Improve Grid */}
             <div className="grid md:grid-cols-2 gap-4">

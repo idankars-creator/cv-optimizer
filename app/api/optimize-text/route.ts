@@ -1,8 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
-import OpenAI from "openai";
+import Anthropic from "@anthropic-ai/sdk";
 
-const openai = new OpenAI({
-  apiKey: process.env.OPENAI_API_KEY,
+const anthropic = new Anthropic({
+  apiKey: process.env.ANTHROPIC_API_KEY,
 });
 
 export async function POST(request: NextRequest) {
@@ -33,17 +33,17 @@ IMPORTANT:
 - Don't add information that wasn't there
 - If it's already good, make minimal changes`;
 
-    const response = await openai.chat.completions.create({
-      model: "gpt-4o",
+    const response = await anthropic.messages.create({
+      model: "claude-sonnet-4-5-20250929",
+      max_tokens: 500,
+      system: systemPrompt,
       messages: [
-        { role: "system", content: systemPrompt },
         { role: "user", content: `Improve this text:\n\n${text}` },
       ],
       temperature: 0.7,
-      max_tokens: 500,
     });
 
-    const improvedText = response.choices[0]?.message?.content?.trim();
+    const improvedText = response.content[0].type === 'text' ? response.content[0].text.trim() : '';
 
     if (!improvedText) {
       return NextResponse.json(

@@ -1,8 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
-import OpenAI from "openai";
+import Anthropic from "@anthropic-ai/sdk";
 
-const openai = new OpenAI({
-  apiKey: process.env.OPENAI_API_KEY,
+const anthropic = new Anthropic({
+  apiKey: process.env.ANTHROPIC_API_KEY,
 });
 
 export async function POST(request: NextRequest) {
@@ -22,16 +22,18 @@ export async function POST(request: NextRequest) {
       Context: ${context || "resume section"}
       IMPORTANT: Return ONLY the improved text.`;
 
-      const response = await openai.chat.completions.create({
-        model: "gpt-4o",
+      const response = await anthropic.messages.create({
+        model: "claude-sonnet-4-5-20250929",
+        max_tokens: 1024,
+        system: builderSystemPrompt,
         messages: [
-          { role: "system", content: builderSystemPrompt },
           { role: "user", content: text },
         ],
         temperature: 0.7,
       });
 
-      return NextResponse.json({ improvedText: response.choices[0]?.message?.content?.trim() });
+      const content = response.content[0].type === 'text' ? response.content[0].text : '';
+      return NextResponse.json({ improvedText: content.trim() });
     }
 
     // ============================================================
@@ -57,20 +59,30 @@ STEP 1: KNOCKOUT CHECK (Immediate Disqualifiers)
   Examples: Lawyer → Engineer, Sales → Developer, Teacher → Data Scientist, Analyst → Software Engineer
   → IF YES: Score MUST be < 35. This is an IMMEDIATE REJECT.
 
-- **Tech Stack Gap:** Does the CV miss >50% of the critical hard skills/languages in the JD?
-  → IF YES: Deduct 30 points from whatever score you calculate.
+- **Tech Stack Gap (PROPORTIONAL - consider JD skill count):**
+  Count total required skills in JD. Scale expectations:
+  → JD has 15-20+ skills: Missing 40% is normal, only penalize if <55% match (-15 pts)
+  → JD has 10-14 skills: Penalize if <65% match (-20 pts)
+  → JD has 5-9 skills: Penalize if <75% match (-25 pts)
+  → JD has 1-4 skills: Penalize if <85% match (-30 pts)
+  → DO NOT penalize when candidate has equivalent/similar technologies
+  → Relevant domain experience partially compensates for specific tool gaps
 
-STEP 2: SENIORITY CALCULATION
+STEP 2: SENIORITY CALCULATION (HIGH IMPACT!)
 ────────────────────────────────────────────────
-Compare candidate's RELEVANT years of experience vs JD requirements:
+Calculate EXPERIENCE GAP = (JD required years) - (candidate's relevant years).
+This is a MAJOR scoring factor with HARD CAPS:
 
-| Candidate Level | Target Level | MAX SCORE |
-|-----------------|--------------|-----------|
-| Junior (0-2 YOE) | Senior (5+ req) | 45 |
-| Junior (0-2 YOE) | Mid (3+ req) | 55 |
-| Mid (2-4 YOE) | Senior (5+ req) | 60 |
-| Mid (2-4 YOE) | Lead/Staff | 50 |
-| Intern/Student | Any Full-Time | 40 |
+| Experience Gap | Impact | HARD CAP |
+|----------------|--------|----------|
+| 0 or negative (meets/exceeds) | +5 to +10 bonus | None |
+| 1-2 years short | -10 points | Cap at 75 |
+| 3-4 years short | -20 points | Cap at 60 |
+| 5+ years short (e.g., 0 YOE vs 5+ req) | -30 points | Cap at 45 |
+| Intern/Student → Any Senior role | -35 points | Cap at 40 |
+
+⚠️ The cap is ABSOLUTE - score CANNOT exceed it regardless of other factors.
+A candidate with 0 experience for a 5+ year role scores MAX 45 even with perfect skills.
 
 STEP 3: ROLE FAMILY CHECK
 ────────────────────────────────────────────────
@@ -123,17 +135,19 @@ PRESERVATION RULES (MUST FOLLOW):
 4. ❌ DO NOT HALLUCINATE: No inventing dates, companies, titles, or skills
 
 OPTIMIZATION STRATEGY:
-- Rewrite Summary to target the JD using keywords naturally
+- Rewrite Summary (3-4 lines) to target the JD using keywords naturally
 - Enhance bullet points with action verbs and metrics where reasonable
 - Bridge gaps identified in Phase 1 through strategic positioning
 
 ════════════════════════════════════════════════════════════════════════════════
 OUTPUT FORMAT (Valid JSON)
 ════════════════════════════════════════════════════════════════════════════════
+YOU MUST RESPOND WITH VALID JSON ONLY. NO MARKDOWN, NO EXPLANATIONS. JUST THE JSON OBJECT:
+
 {
   "score": number, // THE PHASE 1 SCORE (Original baseline - be harsh!)
-  "headline": "string (Brutally honest 1-sentence assessment of the ORIGINAL CV's fit)",
-  "tailoredSummary": "string (Optimized summary targeting the JD)",
+  "headline": "string (2 sentences: First sentence names the STRONGEST matching area specifically. Second sentence names the MOST CRITICAL gap to improve. Be precise - reference specific skills, roles, or experience.)",
+  "tailoredSummary": "string (3-4 line optimized summary targeting the JD - comprehensive narrative, not just 1-2 lines)",
   "missingKeywords": ["critical skill 1", "critical skill 2"],
   "keyImprovements": ["specific improvement 1", "specific improvement 2", "specific improvement 3"],
   "experience": [...], // Return ALL, optimized but not deleted
@@ -150,19 +164,22 @@ OUTPUT FORMAT (Valid JSON)
       ${JSON.stringify(resumeData)}
 
       ${isTargeted ? `TARGET JOB DESCRIPTION: \n${jobDescription}` : ''}
+      
+      Respond with ONLY valid JSON, no other text or markdown.
       `;
 
-      const response = await openai.chat.completions.create({
-        model: "gpt-4o",
+      const response = await anthropic.messages.create({
+        model: "claude-sonnet-4-5-20250929",
+        max_tokens: 4096,
+        system: optimizerSystemPrompt,
         messages: [
-          { role: "system", content: optimizerSystemPrompt },
           { role: "user", content: userMessage },
         ],
-        response_format: { type: "json_object" },
         temperature: 0.3, // Very low temperature for consistent, strict scoring
       });
 
-      const result = JSON.parse(response.choices[0].message.content || "{}");
+      const content = response.content[0].type === 'text' ? response.content[0].text : '{}';
+      const result = JSON.parse(content);
       return NextResponse.json(result);
     }
 

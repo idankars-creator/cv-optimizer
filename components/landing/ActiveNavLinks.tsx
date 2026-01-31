@@ -13,12 +13,8 @@ export function ActiveNavLinks() {
   const [activeSection, setActiveSection] = useState("hero");
 
   useEffect(() => {
-    const scrollContainer = document.querySelector('.snap-y');
-    
     const handleScroll = () => {
-      if (!scrollContainer) return;
-      
-      const scrollPosition = scrollContainer.scrollTop + window.innerHeight / 3;
+      const scrollPosition = window.scrollY + window.innerHeight / 3;
       
       // Find which section we're currently in
       for (const section of sections) {
@@ -33,21 +29,23 @@ export function ActiveNavLinks() {
       }
     };
 
-    if (scrollContainer) {
-      scrollContainer.addEventListener('scroll', handleScroll);
-      handleScroll(); // Check initial position
-      return () => scrollContainer.removeEventListener('scroll', handleScroll);
-    }
+    window.addEventListener('scroll', handleScroll);
+    handleScroll(); // Check initial position
+    return () => window.removeEventListener('scroll', handleScroll);
   }, []);
 
   const handleClick = (e: React.MouseEvent<HTMLAnchorElement>, id: string) => {
     e.preventDefault();
     const element = document.getElementById(id);
-    const scrollContainer = document.querySelector('.snap-y');
-    if (element && scrollContainer) {
-      scrollContainer.scrollTo({ 
-        top: element.offsetTop, 
-        behavior: 'smooth' 
+    if (element) {
+      // Account for fixed header height (80px = h-20)
+      const headerOffset = 80;
+      const elementPosition = element.getBoundingClientRect().top;
+      const offsetPosition = elementPosition + window.pageYOffset - headerOffset;
+
+      window.scrollTo({
+        top: offsetPosition,
+        behavior: 'smooth'
       });
     }
   };

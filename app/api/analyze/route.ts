@@ -1,9 +1,9 @@
 import { NextRequest, NextResponse } from "next/server";
-import OpenAI from "openai";
+import Anthropic from "@anthropic-ai/sdk";
 import { extractText } from "unpdf";
 
-const openai = new OpenAI({
-  apiKey: process.env.OPENAI_API_KEY,
+const anthropic = new Anthropic({
+  apiKey: process.env.ANTHROPIC_API_KEY,
 });
 
 function cleanTitle(raw: string) {
@@ -35,9 +35,9 @@ function inferJobTitleFromDescription(desc: string, companyName: string) {
 
 export async function POST(request: NextRequest) {
   try {
-    if (!process.env.OPENAI_API_KEY) {
+    if (!process.env.ANTHROPIC_API_KEY) {
       return NextResponse.json(
-        { error: "Missing required environment variable: OPENAI_API_KEY" },
+        { error: "Missing required environment variable: ANTHROPIC_API_KEY" },
         { status: 500 }
       );
     }
@@ -109,9 +109,10 @@ export async function POST(request: NextRequest) {
             .trim()
             .slice(0, 15000); // Limit content length
           
-          // Use OpenAI to extract the job description from the page content
-          const extractResponse = await openai.chat.completions.create({
-            model: "gpt-4o-mini",
+          // Use Anthropic to extract the job description from the page content
+          const extractResponse = await anthropic.messages.create({
+            model: "claude-sonnet-4-5-20250929",
+            max_tokens: 2048,
             messages: [
               {
                 role: "user",
@@ -120,7 +121,7 @@ export async function POST(request: NextRequest) {
             ],
             temperature: 0.3,
           });
-          finalJobDescription = extractResponse.choices[0]?.message?.content || "";
+          finalJobDescription = extractResponse.content[0].type === 'text' ? extractResponse.content[0].text : "";
         } else {
           throw new Error("Failed to fetch URL");
         }
@@ -204,16 +205,43 @@ If the candidate is pivoting careers (e.g., Military → Tech, Teacher → Analy
 
 ### STEP 3: SENIORITY & SKILLS ADJUSTMENT
 ────────────────────────────────────────────────────
-**Seniority Check:**
-- Junior applying for Entry/Junior/Mid → NO PENALTY (this is normal!)
-- Junior applying for Senior/Lead → Cap at 60
-- Mid applying for Senior → Cap at 70
-- Matches/Exceeds requirements → +5 to +10 bonus
+**Seniority Check (HIGH IMPACT - seniority gaps are a major factor!):**
 
-**Skills Check (for "${effectiveJobTitle}"):**
-- Has critical keywords from job description (SQL, Python, Tableau, etc.)? → +10 to +15 points
-- Relevant degree or certification? → +5 to +10 points
-- Missing major required skills? → -10 to -15 points
+First, calculate the EXPERIENCE GAP = (JD required years) - (candidate's relevant years).
+
+| Experience Gap | Impact on Score |
+|----------------|-----------------|
+| 0 or negative (meets/exceeds) | +5 to +10 bonus |
+| 1-2 years short | -10 points, cap at 75 |
+| 3-4 years short | -20 points, cap at 60 |
+| 5+ years short (e.g., 0 YOE vs 5+ req) | -30 points, cap at 45 |
+| Intern/Student → Any Senior role | -35 points, cap at 40 |
+
+**⚠️ This is a HARD CAP - the final score CANNOT exceed the cap regardless of other factors.**
+- A candidate with 0 relevant experience applying for a 5+ year role should score NO HIGHER than 45, even with a perfect title and skill match.
+- The experience gap penalty STACKS with domain mismatch penalties.
+
+**Skills Check (for "${effectiveJobTitle}") - PROPORTIONAL SCORING:**
+
+First, count how many distinct required skills/technologies are listed in the JD.
+
+**Scaling by number of required skills:**
+- JD lists 15-20+ skills: Expect ~55-65% match. Having 60% is GOOD. Don't punish heavily for gaps.
+- JD lists 10-14 skills: Expect ~65-75% match.
+- JD lists 5-9 skills: Expect ~75-85% match.
+- JD lists 1-4 skills: Expect ~85-95% match.
+
+**Scoring adjustments:**
+- Meets expected match % for the skill count → +10 to +15 points
+- Relevant degree or certification → +5 to +10 points
+- Below expected match % → -5 to -10 points (MILD penalty)
+- Has RELEVANT EXPERIENCE in the domain even if specific tool names differ → +5 to +10 points (e.g., knows React but JD says Vue - both are frontend frameworks)
+
+**⚠️ DO NOT over-penalize missing skills when:**
+- The candidate has relevant domain experience (transferable knowledge)
+- The JD lists a large number of skills (20+ skills is a wish list, not a hard requirement)
+- The missing skills are "nice to have" rather than core to the role
+- The candidate has equivalent/similar technologies (e.g., PostgreSQL vs MySQL, AWS vs Azure)
 
 ### STEP 4: FINAL SCORE BANDS (HIGH VARIANCE!)
 ────────────────────────────────────────────────────
@@ -267,11 +295,19 @@ ${userSummary ? `
 ## CANDIDATE'S PROFESSIONAL SUMMARY (provided by user - enhance this!):
 ${userSummary}
 
-IMPORTANT: The user has provided their own summary. Use this as a base and DRAMATICALLY improve it:
-- Add quantifiable achievements
-- Include industry keywords
+IMPORTANT: The user provided their own summary. Improve it to be:
+- 3-4 lines (comprehensive and strong)
+- Narrative-driven (builds professional story, NO detailed metrics/numbers)
+- ENHANCE with high-level experience context:
+  - Company types: "experience in high-tech companies", "Fortune 500 background"
+  - Leadership: "track record in leadership", "experience leading teams"
+  - Industry: "experience in fintech", "background in healthcare"
+  - Role progression: "progressive experience in..."
+- CAN mention high-level expertise/skills from other sections
+- DO NOT detail specific achievements or metrics
+- Include industry keywords naturally
 - Make it compelling and role-specific
-- Keep the same general narrative but elevate the language
+- Elevate the language to executive level
 ` : ""}
 
 ${deepDiveAnswers ? `
@@ -370,6 +406,19 @@ Optional sections (keep if in original, or merge into Experience):
 - ❌ Shorten job titles
 - ❌ Modify contact info (name, email, phone, LinkedIn)
 - ❌ Add fake skill percentages
+- ❌ Remove or omit company names from Experience entries
+- ❌ Generalize company names (e.g., "Tech Company" instead of actual name)
+
+### 🏢 RULE 5B: COMPANY NAMES ARE MANDATORY (CRITICAL!)
+────────────────────────────────────────────────────
+Every Experience entry MUST include the company name:
+
+- ❌ WRONG: "Software Engineer | 2020-2022" (missing company!)
+- ❌ WRONG: "Product Analyst | Tech Company" (generalized!)
+- ✅ CORRECT: "Product Analyst | Taboola | 2020-2022"
+- ✅ CORRECT: "Software Engineer | Google | 2018-2020"
+
+**If the original CV has a company name, the output MUST have the EXACT same company name!**
 
 ### 🔗 RULE 6: CONTACT & LINKS IMMUNITY (SACRED!)
 ────────────────────────────────────────────────────
@@ -417,133 +466,307 @@ In the Education section, you MUST preserve ALL academic details:
 5. CHECK LinkedIn URL → Must be IDENTICAL to original
 6. CHECK GPA/Grades in Education → Must be present if original had them
 7. CHECK each military role appears as its own entry with own dates
+8. **CHECK COMPANY NAMES:** Every Experience entry MUST have company name!
+   - If original had "Product Analyst | Taboola | 2020-2022"
+   - Output MUST have "Taboola" (not missing, not generalized!)
 
 **FAILURE CONDITIONS:**
 - If output has FEWER entries than input → FAILED (you collapsed roles!)
 - If 3 military roles became 1 entry → FAILED (undo the merge!)
 - If LinkedIn URL is missing or modified → FAILED
 - If GPA/Grades are missing from Education → FAILED
+- If ANY Experience entry is missing company name → FAILED
+- If company name is generalized (e.g., "Tech Company") → FAILED
 
 ## TRANSFORMATION GOALS:
-1. **AMPLIFIES IMPACT** - Turn passive descriptions into achievement stories
-2. **OPTIMIZES FOR ATS** - Embed critical keywords naturally throughout
-3. **QUANTIFIES EVERYTHING** - Add metrics, percentages, team sizes, revenue impact
-4. **ELEVATES LANGUAGE** - Use power verbs and executive-level phrasing
-5. **ADDS VALUE** - Add inferred metrics and missing skills from context
+1. **EXECUTIVE-LEVEL QUALITY** - Strategic, high-level language focused on business outcomes
+2. **QUANTIFIABLE IMPACT** - Lead with metrics (%, $, numbers) when available in original CV
+3. **ATS OPTIMIZED** - Standard headers, industry keywords, no special formatting
+4. **PRESERVES TRUTH** - ONLY use metrics/numbers that exist in the original CV
 
-## TRANSFORMATION RULES:
+## STRUCTURE RULES (MANDATORY):
 
-### 1. ACHIEVEMENT REFORMULATION (CRITICAL!)
-Transform EVERY bullet point using this framework:
-- BEFORE: "Responsible for managing team projects"
-- AFTER: "Spearheaded cross-functional initiatives managing 12+ team members, delivering 3 major projects on-time, reducing development cycle by 25%"
+### 1. PROFESSIONAL SUMMARY (CONCISE NARRATIVE - ENHANCE WITH HIGH-LEVEL CONTEXT!)
+Write a STRONG, narrative-building summary (3-4 lines):
+- **Build a narrative** - Tell the story of who they are professionally, not what they did
+- **Core strengths and unique value** - What makes them special
+- **Career direction** - Where they're heading, aligned to target role
+- **USE high-level experience context** to strengthen the narrative:
+  - Company types/industries: "experience in high-tech companies", "Fortune 500 background", "startup experience"
+  - Leadership track record: "track record in leadership", "experience leading cross-functional teams"
+  - Industry expertise: "experience in fintech", "background in healthcare technology"
+  - Role progression: "progressive experience in product management"
+- **CAN mention:** High-level expertise areas, skills, or background from other sections
+- **DO NOT detail:** Specific achievements, metrics, percentages, numbers, or quantifiable results
+- **DO NOT mention:** GPA, revenue figures, team sizes, or other detailed metrics
+- **CAN mention:** Years of experience (e.g., "8+ years of experience", "5 years in product management")
+- **Style:** Strategic, compelling, narrative-driven - like a professional brand statement
 
-### 2. QUANTIFICATION MANDATE
-If the CV lacks numbers, INTELLIGENTLY INFER reasonable metrics based on:
-- Industry standards for the role
-- Company size indicators
-- Scope described in the experience
-- Example: "managed team" → "led team of 8-12 professionals"
-- Example: "increased sales" → "drove 35% revenue growth ($2.5M annually)"
+Example tone: "Strategic Product Manager with experience in high-tech companies and a track record in cross-functional leadership. Known for transforming product vision into market success through data-driven decision making and innovative go-to-market strategies."
 
-### 3. KEYWORD SATURATION
-Extract THE TOP 15 keywords from the job description and ensure EACH appears at least once:
-- In the summary/profile
-- In relevant experience bullets
-- In the skills section
+❌ WRONG: "Product Manager with 8+ years of experience driving $50M+ product portfolios and managing teams of 12+ members..." (detailed metrics like $50M, 12+ members)
+✅ CORRECT: "Product Manager with 8+ years of experience in high-tech companies and a track record in cross-functional leadership..."
+❌ WRONG: "Led team that increased revenue by 35% and reduced costs by $500K..." (detailed achievements)
+✅ CORRECT: "Product Analyst with experience in high-tech companies and a track record in data-driven decision making. Expert in transforming product vision into market success."
+✅ CORRECT: "Software Engineer with progressive experience in full-stack development at Fortune 500 companies. Known for building scalable systems and leading technical initiatives."
+✅ CORRECT: "Data Scientist with experience in fintech and healthcare, specializing in machine learning and predictive analytics. Track record in delivering impactful data solutions."
 
-### 4. POWER VERB MANDATE
-Replace weak verbs with POWER VERBS:
-- "Worked on" → "Orchestrated/Spearheaded/Architected"
-- "Helped" → "Accelerated/Enabled/Drove"
-- "Made" → "Engineered/Delivered/Launched"
-- "Did" → "Executed/Implemented/Transformed"
+### 2. EDUCATION SECTION (PRESERVE EVERYTHING!)
+⚠️ NEVER delete or shorten education entries. Include ALL details:
+- ✅ University/Institution name (full name)
+- ✅ Degree and major/field of study
+- ✅ GPA if provided (especially if 3.5+ or equivalent)
+- ✅ Graduation year or date range
+- ✅ Honors, distinctions (Cum Laude, Dean's List, etc.)
+- ✅ Relevant coursework if listed
+- ✅ Thesis title if mentioned
+- ❌ NEVER remove any education entry
 
-### 5. PROFESSIONAL SUMMARY REWRITE
-Create a COMPELLING 3-4 sentence summary that:
-- Opens with years of experience + core expertise
-- Highlights 2-3 key achievements with metrics
-- Aligns perfectly with the target role
-- Includes 3-5 critical keywords
+### 3. BULLET POINTS PER ROLE (Length-Aware & Concise!)
+
+**⚠️ CRITICAL FIRST STEP: ASSESS ORIGINAL CV LENGTH BEFORE ANY EDITING**
+Before writing a single word, evaluate the original CV:
+
+**LENGTH CLASSIFICATION:**
+- **SHORT CV (under ~400 words / less than half a page):** The CV lacks substance. You have room to EXPAND.
+  → Add more detail to bullets, flesh out descriptions, add context
+  → Target output: ~1 full page (500-700 words)
+  → Bullets can be 1.5-2 lines each, add 1-2 extra bullets per role
+
+- **MEDIUM CV (400-800 words / about 1 page):** Good baseline length. Optimize without major expansion.
+  → Keep similar length, improve quality over quantity
+  → Target output: 1-1.5 pages (550-850 words)
+  → Bullets: 1-1.5 lines, standard count
+
+- **LONG CV (800-1200 words / 1.5-2 pages):** Approaching the limit. Be concise.
+  → Tighten language, remove filler, consolidate where possible
+  → Target output: 1.5-2 pages (800-1100 words)
+  → Bullets: 1 line max, reduce older role bullets
+
+- **VERY LONG CV (1200+ words / 2+ pages):** Too long. Must compress.
+  → Aggressively shorten bullets, cut redundancy, trim older roles to 0-1 bullets
+  → Target output: under 2 pages (under 1100 words)
+  → Bullets: 1 line max, break long sentences, every word must earn its place
+
+**GOLDEN RULE:** A strong CV is 1-2 pages. Under 1 page feels thin. Over 2 pages loses the reader.
+
+**Bullet count by recency:**
+- **Current/most recent role:** 2-3 bullets (3 only if truly critical achievements)
+- **Recent relevant roles (1-3 years old):** 2 bullets
+- **Older roles (3-5 years old):** 1-2 bullets
+- **Very old roles (5+ years):** 0-1 bullets
+
+**Bullet length guidelines:**
+- **Be concise** - Every word counts
+- **Break long sentences** into shorter, punchier statements
+- **Remove filler words** - Get to the point quickly
+- **Lead with impact:** Quantifiable metrics (%, $, numbers) when available
+- **NO personal pronouns:** Remove "I", "my", "we", "our"
+
+**Examples:**
+- ❌ TOO LONG: "Spearheaded cross-functional initiatives managing 12+ team members across engineering, product, and design departments, delivering 3 major projects on-time and under budget, reducing development cycle by 25% while maintaining high quality standards."
+- ✅ CONCISE: "Spearheaded cross-functional initiatives managing 12+ team members, delivering 3 major projects on-time and reducing development cycle by 25%."
+
+### 4. SKILLS SECTION (MANDATORY!)
+- **Must include a dedicated SKILLS section**
+- **8-10 most relevant skills**, grouped logically by category
+- **Format:** "Category: Skill1, Skill2, Skill3 | Category: Skill4, Skill5"
+- **Extract skills from job description and requirements**
+- Prioritize skills mentioned in target job description
+
+Example: "Programming: Python, JavaScript, SQL | Tools: Tableau, Power BI, Excel | Frameworks: React, Node.js"
+
+### 5. CONTENT PHILOSOPHY: ENHANCE, DON'T DELETE!
+⚠️ **Transform weak content into strong content rather than removing it:**
+- ✅ **ENHANCE and REFINE** - Improve wording, add impact, strengthen language
+- ✅ KEEP all job entries (just reduce bullets for old roles based on recency)
+- ✅ KEEP all education entries with full details (institution, degree, GPA if strong, honors)
+- ✅ KEEP military service, volunteering, certifications
+- ✅ KEEP awards, honors, languages
+- ❌ Only remove if truly redundant or completely irrelevant
+- **When in doubt, KEEP IT and ENHANCE IT!**
+
+## QUALITY RULES:
+
+### 6. PROFESSIONAL QUALITY (EXECUTIVE-LEVEL!)
+- **Executive-level language** with strategic focus
+- **Lead with quantifiable impact** (%, $, metrics) when available in original
+- **Strong action verbs:** Spearheaded, Orchestrated, Drove, Executed, Architected, Championed, Transformed, Accelerated, Delivered, Scaled
+- **Focus on business outcomes**, not task lists
+- **Remove personal pronouns** (I, my, we, our)
+- **Consistent verb tense:** Past for old roles, present for current role
+
+Examples:
+- ❌ WRONG: "Responsible for managing team projects and tasks"
+- ✅ RIGHT: "Spearheaded strategic initiatives driving 20% efficiency gains"
+- ❌ WRONG: "I helped with customer issues and complaints"
+- ✅ RIGHT: "Orchestrated customer success programs improving retention by 15%"
+
+### 7. NO FABRICATION!
+⚠️ NEVER invent metrics or numbers. Only use what's in the original CV.
+- If original has numbers → keep them and highlight
+- If no numbers → use strong language without fake metrics
+
+## ATS OPTIMIZATION:
+
+### 8. STANDARD SECTION HEADERS (Use Exactly These!)
+- **PROFESSIONAL SUMMARY** (not "About Me" or "Profile")
+- **EXPERIENCE** (not "Work History" or "Employment")
+- **EDUCATION** (not "Academic Background")
+- **SKILLS** (not "Core Competencies" or "Expertise")
+
+### 9. FORMATTING CONSISTENCY & ATS OPTIMIZATION (CRITICAL!)
+**Formatting Consistency:**
+- **Capitalize all acronyms properly:** MBA, ATS, CEO, VP, SQL, API, etc.
+- **Consistent date format throughout:** Use same format (e.g., "2020-2022" or "Jan 2020 - Dec 2022")
+- **Job titles and company names formatted consistently:** Title Case for titles, proper capitalization for companies
+- **Degree abbreviations capitalized:** B.A., M.Sc., Ph.D., B.S., M.B.A.
+
+**ATS-Friendly Formatting:**
+- **Industry keywords naturally integrated** throughout
+- **No tables, graphics, special characters, or columns**
+- **Common, searchable job titles** (not creative/internal titles)
+- **Clean, parseable format** - simple text, standard structure
+- **No special characters** (→, •, ★) except standard bullet points
+
+## FINAL REMINDER:
+**The output should be:**
+- ✅ **Concise yet complete** - 3-4 line narrative summary (NO metrics), strategic bullet points
+- ✅ **Impactful yet professional** - Executive language, quantifiable results in bullets (not summary)
+- ✅ **Optimized yet authentic** - ATS-friendly, but preserves truth
+- ✅ **Enhanced, not deleted** - Transform weak content into strong content
+
+## ⚠️ CRITICAL: OPTIMIZED SCORE CONSTRAINTS (READ BEFORE SCORING!)
+════════════════════════════════════════════════════════════════════════════════
+Optimization improves PRESENTATION only. It CANNOT change the candidate's actual:
+- Education/degrees (a missing social work degree stays missing)
+- Certifications/licenses (no license = no license, even with better wording)
+- Years of experience (rewording doesn't add years)
+- Domain expertise (an analyst reworded to sound like a social worker is still an analyst)
+- Core hard skills they don't actually have
+
+**MAXIMUM IMPROVEMENT BY ORIGINAL SCORE TIER:**
+
+| Original Score | Max Improvement | Reasoning |
+|----------------|-----------------|-----------|
+| 0-34 (fundamental mismatch) | +10-12 pts max | Wrong field/education. Wording can't fix missing qualifications. |
+| 35-54 (weak fit) | +15-18 pts max | Some transferable elements. Can highlight overlaps better. |
+| 55-74 (moderate fit) | +18-22 pts max | Adjacent field. Can reposition relevant experience effectively. |
+| 75+ (strong fit) | +10-15 pts max | Already good fit. Polish only. |
+
+**HARD RULES:**
+- If original scored < 35 due to domain mismatch → Optimized score CANNOT exceed 47
+- If original was capped by seniority → Optimized inherits same cap + max 15 pts
+- If role REQUIRES specific education (social worker, lawyer, doctor, nurse, CPA, engineer with PE) and candidate LACKS it → Optimized score CANNOT exceed original + 12
+- The optimized score reflects "best possible presentation of THIS candidate" — not "how good does the text read in isolation"
+
+**EXAMPLE:**
+- Analyst → Social Worker: Original 22. Missing: social work degree (mandatory), clinical hours, license.
+  Optimization adds better keywords and ATS formatting = +10. Optimized = 32. NOT 78.
+- Junior Dev → Senior Dev: Original 50. Missing: years of experience.
+  Optimization highlights relevant projects better = +18. Optimized = 68. NOT 90.
+
+════════════════════════════════════════════════════════════════════════════════
 
 ## OUTPUT FORMAT (JSON):
 {
-  "overallScore": <Score from Phase 1 algorithm - use calibration examples>,
-  "summary": "<Honest 1-sentence assessment of the original CV's fit for the TARGET ROLE>",
+  "scoreComparison": {
+    "original": {
+      "total": <Original CV score from Phase 1 (0-100)>,
+      "breakdown": {
+        "ats": <ATS optimization score (0-100) - keywords, formatting, standard headers>,
+        "impact": <Impact score (0-100) - achievements, metrics, action verbs>,
+        "clarity": <Clarity score (0-100) - structure, conciseness, readability>
+      }
+    },
+    "optimized": {
+      "total": <CONSTRAINED optimized score - MUST follow the max improvement rules above. Calculate: min(original.total + max_improvement_for_tier, hard_cap_if_applicable)>,
+      "breakdown": {
+        "ats": <Improved ATS score>,
+        "impact": <Improved Impact score>,
+        "clarity": <Improved Clarity score>
+      }
+    },
+    "improvement": <Total points improved (optimized.total - original.total) - MUST be within allowed range>
+  },
+  "overallScore": <Same as scoreComparison.original.total for backwards compatibility>,
+  "summary": "<2-sentence assessment: First sentence states the SINGLE STRONGEST matching area (be specific - name the skill/experience/role match). Second sentence states the SINGLE MOST CRITICAL gap to address (be specific - name exactly what's missing or weak). Max 40 words total.>",
   "strengths": [
-    "<specific strength #1 with evidence>",
-    "<specific strength #2 with evidence>",
-    "<specific strength #3 with evidence>",
-    "<specific strength #4 with evidence>"
+    "<strength #1 - Be SPECIFIC: name the exact skill, role, or experience that matches. e.g., '3 years of direct Product Analyst experience at Taboola matches the role requirements closely'>",
+    "<strength #2 - specific match>",
+    "<strength #3 - specific match>"
   ],
+  // LIMIT: Exactly 3 strengths - each must reference a SPECIFIC skill, experience, or qualification from the CV that matches the JD
   "improvements": [
-    "<major improvement #1 - be specific>",
-    "<major improvement #2 - be specific>",
-    "<major improvement #3 - be specific>",
-    "<major improvement #4 - be specific>",
-    "<major improvement #5 - be specific>"
+    "<improvement #1 - Be SPECIFIC: name exactly what's missing and WHY it matters. e.g., 'No Python experience listed - required for 3 of 5 core job responsibilities'>",
+    "<improvement #2 - specific gap>",
+    "<improvement #3 - specific gap>"
   ],
+  // LIMIT: Exactly 3 improvements - ranked by IMPACT (most important first). Each must name the specific gap and its importance to this role
   "missingKeySkills": [
     "<critical skill gap #1>",
     "<critical skill gap #2>",
     "<critical skill gap #3>"
   ],
+  // LIMIT: Maximum 5 missing skills - only the most critical gaps
   "suggestedChanges": [
     {
       "id": "chg_1",
       "section": "Summary",
-      "original": "<exact text from CV>",
-      "suggested": "<DRAMATICALLY improved version>",
-      "reason": "<why this is more impactful>"
+      "original": "<original text>",
+      "suggested": "<concise version - max 40 words>",
+      "reason": "<5 words max>"
     },
     {
-      "id": "chg_2", 
+      "id": "chg_2",
       "section": "Experience",
-      "original": "<exact bullet text>",
-      "suggested": "<transformed achievement with metrics>",
-      "reason": "<the transformation logic>"
+      "original": "<original bullet>",
+      "suggested": "<concise bullet - max 15 words>",
+      "reason": "<5 words max>"
     }
   ],
+  // LIMIT: 3-4 suggested changes, each bullet max 15 words
   "keywords": {
-    "present": ["<keywords found>"],
-    "missing": ["<critical missing keywords - TOP PRIORITY>"],
-    "added": ["<keywords you added in optimization>"]
+    "present": ["<max 8 keywords found>"],
+    "missing": ["<max 8 critical missing keywords>"],
+    "added": ["<max 5 keywords you added>"]
   },
-  "optimizedCV": "<THE COMPLETE TRANSFORMED CV in this EXACT format:
+  // STRICT LIMITS: present max 8, missing max 8, added max 5
+  "optimizedCV": "<THE COMPLETE TRANSFORMED CV - EXECUTIVE FORMAT:
 
 [Full Name - EXACT as original]
-[Professional Title]
-[email - EXACT] | [phone - EXACT] | [location] | [linkedin URL - EXACT, no reformatting]
+[Professional Title - use common/searchable title]
+[email - EXACT] | [phone - EXACT] | [location] | [linkedin URL - EXACT]
 
 PROFESSIONAL SUMMARY
-[A compelling 3-4 sentence summary highlighting years of experience, key achievements with metrics, and career focus aligned to target role]
+[3-4 STRONG narrative lines. ENHANCE with high-level experience context: company types (e.g., "high-tech companies", "Fortune 500"), leadership track record, industry expertise. CAN mention high-level skills/expertise. DO NOT detail specific achievements or metrics. Build professional story, focus on core strengths and career direction.]
 
 EXPERIENCE
 [Job Title] | [Company] | [Date Range]
-• [Achievement bullet with metrics]
-• [Achievement bullet with metrics]
-[...ALL jobs from original, enhanced but not removed...]
+• [CONCISE bullet - assess CV length first: Short CV=1.5-2 lines, Long CV=1 line max, Medium=1-1.5 lines]
+• [CONCISE bullet - action verb + impact, remove filler words, break long sentences]
+[RECENT ROLES: 2 bullets (3 only if truly exceptional). OLDER ROLES: 0-1 bullets. Be length-aware!]
 
 EDUCATION
-[Degree] | [Institution] | [Date]
-[...ALL education entries from original...]
+[Degree in Field] | [University Name - FULL] | [Year]
+GPA: [if provided, especially if 3.5+] | [Honors: Cum Laude, Dean's List, etc.]
+[Relevant Coursework: if listed] | [Thesis: if mentioned]
+[⚠️ PRESERVE ALL education details - GPA, honors, coursework, thesis!]
 
 SKILLS
-[Skill 1], [Skill 2], [Skill 3]... [...ALL skills from original plus additions...]
+[Group 1]: Skill1, Skill2, Skill3 | [Group 2]: Skill4, Skill5 | [Group 3]: Skill6, Skill7
+[MAX 8-10 skills total, grouped by category]
 
-MILITARY SERVICE (if in original - MANDATORY to include!)
+MILITARY SERVICE (if in original)
 [Role] | [Unit] | [Date Range]
-• [Enhanced bullet]
+• [1 executive-level bullet max]
 
-VOLUNTEERING (if in original - MANDATORY to include!)
+VOLUNTEERING (if in original)
 [Role] | [Organization] | [Date Range]
-• [Enhanced bullet]
+• [1 bullet max]
 
-AWARDS & HONORS (if in original - MANDATORY to include!)
-• [Award name - Year]
-
-CERTIFICATIONS (if in original - MANDATORY to include!)
-• [Certification name]
+CERTIFICATIONS (if in original)
+[Certification 1] | [Certification 2]
 
 LANGUAGES (if in original - MANDATORY to include!)
 • [Language - Level]
@@ -555,38 +778,37 @@ IMPORTANT:
 }
 
 ## CRITICAL REMINDERS:
-1. **PRESERVE EVERYTHING** - The optimizedCV must contain ALL content from the original. NEVER delete jobs, education, skills, or bullets!
-2. The "optimizedCV" must be NOTICEABLY better - enhanced wording, added metrics, stronger verbs
-3. Add reasonable metrics even if not explicit in original (use industry benchmarks)
-4. Every bullet should start with a power verb
-5. The PROFESSIONAL SUMMARY section is MANDATORY - it MUST appear in the optimizedCV as a complete paragraph (3-4 sentences)
-6. Provide 6-10 suggestedChanges covering ALL major sections
-7. Keywords in "missing" should be added to the optimizedCV where natural
-8. The optimizedCV must start with: Name, Title, Contact, then "PROFESSIONAL SUMMARY" header followed by the summary paragraph
-9. **VERIFICATION**: Before finalizing, count sections in original vs optimized - optimized should have EQUAL OR MORE content
-10. **MILITARY/VOLUNTEERING/AWARDS**: If the original CV has these sections, they MUST appear in optimizedCV - this is NON-NEGOTIABLE!
-11. **CONTACT INFO**: Email, phone, and LinkedIn URL must be copied EXACTLY - do not modify or reformat URLs!
+1. **ENHANCED NARRATIVE SUMMARY** - 3-4 lines, USE high-level experience context (company types, leadership, industry), NO detailed achievements/metrics!
+2. **LENGTH-AWARE BULLETS** - Assess CV length first: Short CV=1.5-2 lines, Long CV=1 line max, Medium=1-1.5 lines
+3. **BULLET COUNT** - Recent roles: 2 bullets (3 only if exceptional). Older: 0-1 bullets
+4. **BE CONCISE** - Remove filler words, break long sentences, every word counts!
+5. **EDUCATION COMPLETE** - Keep ALL details: GPA, honors, coursework, thesis. NEVER delete!
+6. **SKILLS** - Max 8-10 relevant skills, grouped by category
+7. **ENHANCE, DON'T DELETE** - Transform weak content into strong content instead of removing
+8. **NO PRONOUNS** - Remove "I", "my", "we", "our" from all text
+9. **EXECUTIVE LANGUAGE** - Spearheaded, Orchestrated, Drove, Executed
+10. **LEAD WITH IMPACT** - Quantifiable results first (%, $, metrics) when available
+9. **CONSISTENT TENSE** - Past tense for past roles, present for current
+10. **NEVER FABRICATE** - Only use metrics that exist in original CV
+11. **ATS HEADERS** - PROFESSIONAL SUMMARY, EXPERIENCE, EDUCATION, SKILLS
+12. **CONTACT INFO** - Copy email, phone, LinkedIn EXACTLY as original
 
 Return ONLY the JSON object.`;
 
-    const response = await openai.chat.completions.create({
-      model: "gpt-4o",
+    const response = await anthropic.messages.create({
+      model: "claude-sonnet-4-5-20250929",
+      max_tokens: 4000,
+      system: "You are an executive resume writer who ENHANCES content, not deletes it. Create an AMAZING 3-4 line professional summary. PRESERVE all education details (GPA, honors, coursework). Recent roles: 2 bullets (3 if exceptional), older: 0-1. Transform weak content into strong content. Executive language. NEVER fabricate. Respond with valid JSON only.",
       messages: [
-        {
-          role: "system",
-          content: "You are a world-class executive resume writer who transforms average CVs into interview-winning documents. You are creative, bold, and know exactly what recruiters want to see. Always respond with valid JSON only.",
-        },
         {
           role: "user",
           content: analysisPrompt,
         },
       ],
-      temperature: 0.8, // Higher for more creative optimization
-      max_tokens: 8000, // Ensure enough space for comprehensive rewrite
-      response_format: { type: "json_object" },
+      temperature: 0.5, // Lower for more consistent, truthful output
     });
 
-    const content = response.choices[0]?.message?.content || "";
+    const content = response.content[0].type === 'text' ? response.content[0].text : "";
     
     // Parse the JSON response
     let analysis;

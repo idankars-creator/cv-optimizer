@@ -1,8 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
-import OpenAI from "openai";
+import Anthropic from "@anthropic-ai/sdk";
 
-const openai = new OpenAI({
-  apiKey: process.env.OPENAI_API_KEY,
+const anthropic = new Anthropic({
+  apiKey: process.env.ANTHROPIC_API_KEY,
 });
 
 export const runtime = "nodejs";
@@ -34,9 +34,9 @@ function inferJobTitleFromDescription(desc: string, companyName: string) {
 
 export async function POST(request: NextRequest) {
   try {
-    if (!process.env.OPENAI_API_KEY) {
+    if (!process.env.ANTHROPIC_API_KEY) {
       return NextResponse.json(
-        { error: "Missing required environment variable: OPENAI_API_KEY" },
+        { error: "Missing required environment variable: ANTHROPIC_API_KEY" },
         { status: 500 }
       );
     }
@@ -71,74 +71,95 @@ export async function POST(request: NextRequest) {
       ? `Company:\n${effectiveCompany}`
       : `[Company name not specified. Keep company references generic but professional.]`;
 
-    const prompt = `I will provide:
-1) My CV
-2) The target role${hasJobDescription ? " and job description" : ""}
-${companyName.trim() ? "3) The company name" : ""}
+    const prompt = `Create an EXCEPTIONAL, personalized cover letter that makes the recruiter excited to interview this candidate.
 
-Your task:
-Create a concise, high-impact cover letter tailored specifically to this role${companyName.trim() ? " and company" : ""}.
+═══════════════════════════════════════════════════════════════
+STRUCTURE (Exactly 4 paragraphs, 250-350 words total)
+═══════════════════════════════════════════════════════════════
 
-STRICT REQUIREMENTS:
-- Length: 220–300 words MAX (never exceed one page)
-- Tone: confident, natural, human, and professional — NOT generic, NOT flowery, NOT robotic
-- Style: clear, direct, impact-focused (avoid buzzwords and clichés)
-- Voice: first-person, active voice
-- Do NOT sound like AI wrote this
-- Do NOT over-explain or repeat my CV
-- Do NOT use corporate fluff (e.g. "passionate", "synergy", "fast-paced environment")
+**PARAGRAPH 1 - OPENING (Hook the reader immediately)**
+- Open with genuine enthusiasm for THIS specific role at THIS company
+- Mention how you found the position (or a compelling reason for interest)
+- One powerful sentence on why you're a strong fit
+- Make them want to keep reading!
 
-STRUCTURE:
-1. Opening (2–3 sentences)
-   - Directly state the role
-   - One sharp hook linking my background to ${companyName.trim() ? "the company's mission/product" : "typical requirements for this role"}
+**PARAGRAPH 2 - YOUR VALUE (Prove your worth)**
+- 2-3 most relevant achievements that DIRECTLY match job requirements
+- Use SPECIFIC metrics and results (%, $, numbers from the CV)
+- Connect each achievement to what THEY need
+- Show, don't tell - concrete examples, not adjectives
 
-2. Core Value (1 short paragraph)
-   - 2–3 concrete strengths or achievements from my CV
-   - ${hasJobDescription ? "Tie each explicitly to what the job description prioritizes" : "Tie each to what is typically valued for this role"}
-   - Focus on outcomes and impact, not responsibilities
+**PARAGRAPH 3 - WHY THIS COMPANY (Show you did your research)**
+${companyName.trim() ? `- Demonstrate knowledge of ${effectiveCompany} (their mission, products, recent news, challenges)
+- Explain why you want to work at ${effectiveCompany} specifically
+- What unique value YOU will bring to THEIR team
+- This paragraph should be IMPOSSIBLE to reuse for another company` : `- Show understanding of what companies in this space typically value
+- Explain why this role excites you specifically
+- What unique value you bring based on your background`}
 
-3. ${companyName.trim() ? "Company Fit (1 short paragraph)\n   - Why this company specifically (product, market, strategy, culture)\n   - Show understanding of what they do — no generic praise" : "Role Fit (1 short paragraph)\n   - Why this role specifically and how your experience aligns\n   - Show understanding of typical challenges and priorities"}
+**PARAGRAPH 4 - CLOSING (Confident call to action)**
+- Express genuine enthusiasm and confidence (not desperation)
+- Clear call to action - request an interview/discussion
+- Professional sign-off
 
-4. Closing (2 sentences)
-   - Clear interest and confidence
-   - Polite, professional close (no desperation)
+═══════════════════════════════════════════════════════════════
+TONE & STYLE REQUIREMENTS
+═══════════════════════════════════════════════════════════════
+✅ Professional but conversational and engaging
+✅ Confident without being arrogant
+✅ Show personality while maintaining professionalism
+✅ Mirror language from the job description naturally
+✅ Sound like a REAL HUMAN wrote this, not AI
+✅ Every sentence must add value - no filler
 
-FORMATTING & LOOK:
-- Use a clean, professional layout suitable for PDF or email
-- Font recommendation: Arial, Calibri, or Times New Roman
-- Font size: 10.5–11.5
-- Normal margins
-- No emojis, no bullet points, no bold inside paragraphs
+❌ AVOID THESE CLICHÉS (instant rejection triggers):
+- "I'm a team player" / "hard worker" / "passionate about..."
+- "I believe I would be a great fit" / "I am confident that..."
+- "fast-paced environment" / "synergy" / "leverage"
+- "I am writing to express my interest" / "To whom it may concern"
+- Generic statements that could apply to any job
+- Desperate language ("I really need this job", "please consider me")
 
-FINAL CHECK BEFORE RETURNING:
-- Read like a real human wrote it in one sitting
-- Sounds like someone who understands the role deeply
-- Could realistically be sent to a top-tier company
+═══════════════════════════════════════════════════════════════
+QUALITY CHECKLIST (Verify before returning)
+═══════════════════════════════════════════════════════════════
+□ Highly personalized to ${effectiveJobTitle} at ${effectiveCompany}
+□ Contains 2-3 specific achievements with metrics from the CV
+□ Shows genuine research/knowledge about the company
+□ Could NOT be used for any other job application
+□ 250-350 words (concise but impactful)
+□ Reads naturally, like written by an intelligent human
+□ Makes the recruiter WANT to interview this person
 
-If something in my CV is weak or missing, subtly work around it without calling attention to gaps.
+═══════════════════════════════════════════════════════════════
+INPUTS
+═══════════════════════════════════════════════════════════════
 
---- INPUTS ---
+**Role:** ${effectiveJobTitle}
 
-Role title:
-${effectiveJobTitle}
+**Company:** ${effectiveCompany}
 
-${companySection}
+**Job Requirements:**
+${hasJobDescription ? jobDescription : "[No description provided - use typical requirements for this role]"}
 
-${jobContextSection}
-
-CV:
+**Candidate's CV:**
 ${cvText}
 
-Return ONLY the cover letter text.`;
+═══════════════════════════════════════════════════════════════
+OUTPUT
+═══════════════════════════════════════════════════════════════
+Return ONLY the cover letter text, ready to send. No headers, no explanations, just the letter.
+Start with "Dear Hiring Manager," or "Dear [Company] Team," if appropriate.`;
 
-    const response = await openai.chat.completions.create({
-      model: "gpt-4o",
+    const response = await anthropic.messages.create({
+      model: "claude-sonnet-4-5-20250929",
+      max_tokens: 2048,
+      system: "You are an expert cover letter writer who creates personalized, compelling letters that get interviews. Your letters are: 1) Highly specific to the role and company, 2) Full of concrete achievements with metrics, 3) Show genuine company research, 4) Sound authentically human, 5) 250-350 words, 4 paragraphs. Never use clichés like 'team player', 'passionate', or 'I believe I would be a great fit'. Every letter should be impossible to reuse for another application.",
       messages: [{ role: "user", content: prompt }],
       temperature: 0.7,
     });
 
-    const coverLetter = response.choices[0]?.message?.content?.trim() ?? "";
+    const coverLetter = response.content[0].type === 'text' ? response.content[0].text.trim() : "";
     if (!coverLetter) {
       return NextResponse.json({ error: "Empty cover letter result" }, { status: 500 });
     }

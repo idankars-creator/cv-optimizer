@@ -13,7 +13,7 @@ import { ActiveNavLinks } from "@/components/landing/ActiveNavLinks";
 
 export default function LandingPage() {
   return (
-    <div className="min-h-screen bg-[#FAFAF8] text-[#1a1a1a] snap-y snap-mandatory overflow-y-auto h-screen scroll-smooth">
+    <div className="min-h-screen bg-[#FAFAF8] text-[#1a1a1a]">
       {/* Header - Premium Full Width Navbar */}
       <header className="fixed top-0 left-0 right-0 z-50 w-full bg-white/90 backdrop-blur-md border-b border-stone-200/60">
         <div className="w-full px-8 md:px-16 h-20 flex items-center justify-between">
@@ -60,7 +60,7 @@ export default function LandingPage() {
       </header>
 
       {/* Hero Section */}
-      <section id="hero" className="relative w-full min-h-screen flex flex-col pt-28 pb-8 snap-start snap-always">
+      <section id="hero" className="relative w-full min-h-screen flex flex-col pt-28 pb-8">
         {/* Subtle background */}
         <div className="absolute inset-0 bg-gradient-to-br from-[#FAFAF8] via-white to-stone-50" />
         
@@ -162,7 +162,7 @@ export default function LandingPage() {
       </section>
 
       {/* Features Section - ATS */}
-      <section id="features" className="w-full min-h-screen flex items-center py-16 bg-[#FAFAF8] snap-start snap-always">
+      <section id="features" className="w-full min-h-screen flex items-center py-16 bg-[#FAFAF8]">
         <div className="max-w-7xl mx-auto px-8 lg:px-16">
           <div className="text-center mb-16">
             <h2 className="font-serif text-4xl sm:text-5xl font-light text-[#1a1a1a] mb-5">
@@ -248,7 +248,7 @@ export default function LandingPage() {
       </section>
 
       {/* Features Section - AI Writer */}
-      <section className="w-full min-h-screen flex items-center py-16 bg-white snap-start snap-always">
+      <section className="w-full min-h-screen flex items-center py-16 bg-white">
         <div className="max-w-7xl mx-auto px-8 lg:px-16">
           <div className="grid lg:grid-cols-2 gap-12 lg:gap-16 items-center">
             <div className="max-w-lg">
@@ -311,7 +311,7 @@ export default function LandingPage() {
       </section>
 
       {/* Templates Section */}
-      <section id="templates" className="w-full min-h-screen flex items-center py-16 bg-white snap-start snap-always">
+      <section id="templates" className="w-full min-h-screen flex items-center py-16 bg-white">
         <div className="max-w-7xl mx-auto px-8 lg:px-16">
           <div className="grid lg:grid-cols-2 gap-16 lg:gap-20 items-center">
             {/* Template Grid Visual */}
@@ -451,7 +451,7 @@ export default function LandingPage() {
       </section>
 
       {/* Testimonials Section */}
-      <section id="testimonials" className="w-full min-h-screen flex items-center py-16 bg-[#FAFAF8] snap-start snap-always">
+      <section id="testimonials" className="w-full min-h-screen flex items-center py-16 bg-[#FAFAF8]">
         <div className="max-w-7xl mx-auto px-8 lg:px-16">
           <div className="text-center mb-16">
             <h2 className="font-serif text-4xl sm:text-5xl font-light text-[#1a1a1a] mb-5">
@@ -534,7 +534,7 @@ export default function LandingPage() {
       </section>
 
       {/* Final CTA Section */}
-      <section className="w-full min-h-screen flex items-center py-16 bg-[#0A2647] snap-start snap-always">
+      <section className="w-full min-h-screen flex items-center py-16 bg-[#0A2647]">
         <div className="max-w-3xl mx-auto px-8 lg:px-16 text-center">
           <h2 className="font-serif text-4xl sm:text-5xl font-light text-white mb-6">
             Ready to get Hired?
@@ -557,7 +557,7 @@ export default function LandingPage() {
       </section>
 
       {/* Footer */}
-      <footer className="w-full bg-[#0A2647] border-t border-white/10 text-white/60 py-10 snap-start">
+      <footer className="w-full bg-[#0A2647] border-t border-white/10 text-white/60 py-10">
         <div className="max-w-7xl mx-auto px-8 lg:px-16">
           <div className="flex flex-col md:flex-row items-center justify-between gap-6">
             <div className="flex items-center gap-3">

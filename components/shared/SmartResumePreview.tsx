@@ -129,18 +129,25 @@ export function SmartResumePreview({
     setSpacingLevel(2);
   };
 
-  // Calculate dynamic styles based on slider levels
+  // Calculate dynamic styles based on slider levels - 10 distinct gradual levels with bigger jumps
   const getDynamicStyles = (): React.CSSProperties => {
-    // Font size: Range from 8px (level 1) to 14px (level 10)
-    const fontSize = 8 + (fontLevel - 1) * 0.67;
+    // Font size: Range from 8px (level 1) to 14px (level 10) - 10 distinct values
+    // Formula: 8 + (level - 1) * (14 - 8) / 9 = 8 + (level - 1) * 0.667
+    const fontSize = 8 + (fontLevel - 1) * (6 / 9); // Ensures level 1 = 8, level 10 = 14
     
-    // Line height: Range from 1.1 (level 1) to 1.8 (level 10)
-    const lineHeight = 1.1 + (spacingLevel - 1) * 0.078;
+    // Line height: Bigger jumps - Range from 1.1 (level 1) to 1.9 (level 10)
+    const lineHeight = 1.1 + (spacingLevel - 1) * (0.8 / 9);
     
-    // Section gaps: Range from 4px to 24px
-    const sectionGap = 4 + (spacingLevel - 1) * 2.2;
+    // Section gaps: Bigger jumps - Range from 2px (level 1, tighter) to 32px (level 10)
+    const sectionGap = 2 + (spacingLevel - 1) * (30 / 9);
     
-    // Heading scales
+    // Paragraph gaps: More pronounced - Range from 0px (level 1) to 16px (level 10)
+    const paragraphGap = (spacingLevel - 1) * (16 / 9);
+    
+    // Item gaps: Bigger jumps - Range from 0.5px (level 1) to 8px (level 10)
+    const itemGap = 0.5 + (spacingLevel - 1) * (7.5 / 9);
+    
+    // Heading scales (proportional to base font)
     const h1Size = fontSize * 2.2;
     const h2Size = fontSize * 1.4;
     const h3Size = fontSize * 1.2;
@@ -152,36 +159,92 @@ export function SmartResumePreview({
       '--base-font-size': `${fontSize}px`,
       '--line-height': `${lineHeight}`,
       '--section-gap': `${sectionGap}px`,
-      '--item-gap': `${sectionGap * 0.5}px`,
+      '--item-gap': `${itemGap}px`,
+      '--paragraph-gap': `${paragraphGap}px`,
       '--h1-size': `${h1Size}px`,
       '--h2-size': `${h2Size}px`,
       '--h3-size': `${h3Size}px`,
-      '--p-margin': `${spacingLevel * 0.5}px`,
-      '--li-margin': `${spacingLevel * 0.3}px`,
+      '--p-margin': `${paragraphGap}px`,
+      '--li-margin': `${itemGap}px`,
     } as React.CSSProperties;
   };
 
-  // Generate CSS classes for dynamic styling
+  // Generate CSS classes for dynamic styling with 10 distinct levels
+  // Note: Inline styles from getDynamicStyles() take precedence, this is for fallback
   const getDynamicClasses = (): string => {
-    // Create Tailwind-like classes based on levels
-    const fontClasses = fontLevel <= 3 
-      ? '[&_*]:!text-[8pt] [&_h1]:!text-[14pt] [&_h2]:!text-[10pt] [&_h3]:!text-[9pt]'
-      : fontLevel <= 6
-        ? '[&_*]:!text-[10pt] [&_h1]:!text-[18pt] [&_h2]:!text-[12pt] [&_h3]:!text-[11pt]'
-        : '[&_*]:!text-[12pt] [&_h1]:!text-[22pt] [&_h2]:!text-[14pt] [&_h3]:!text-[12pt]';
+    // Use the same formulas as getDynamicStyles() for consistency
+    // Font size: Range from 8pt (level 1) to 14pt (level 10) - 10 distinct values
+    const baseFontSize = 8 + (fontLevel - 1) * (6 / 9);
+    const h1Size = baseFontSize * 2.2;
+    const h2Size = baseFontSize * 1.4;
+    const h3Size = baseFontSize * 1.2;
     
-    const spacingClasses = spacingLevel <= 3
-      ? '[&_*]:!leading-[1.15] [&_p]:!mb-0.5 [&_li]:!mb-0 [&_section]:!mb-1.5 [&_ul]:!my-0.5'
-      : spacingLevel <= 6
-        ? '[&_*]:!leading-[1.35] [&_p]:!mb-1 [&_li]:!mb-0.5 [&_section]:!mb-3 [&_ul]:!my-1'
-        : '[&_*]:!leading-[1.6] [&_p]:!mb-2 [&_li]:!mb-1.5 [&_section]:!mb-5 [&_ul]:!my-2';
+    // Line height: Range from 1.1 (level 1) to 1.8 (level 10) - 10 distinct values
+    const lineHeight = 1.1 + (spacingLevel - 1) * (0.7 / 9);
     
-    // Additional padding/margin adjustments for very compact mode
+    // Spacing values: Range from 4px (level 1) to 24px (level 10) - 10 distinct values
+    const sectionGap = 4 + (spacingLevel - 1) * (20 / 9);
+    const pMargin = spacingLevel * 0.5;
+    const liMargin = spacingLevel * 0.3;
+    const ulMargin = sectionGap * 0.25;
+    
+    // Create Tailwind classes with calculated values (using CSS custom properties for precision)
+    // Since inline styles handle the main styling, these classes are minimal
     const compactExtras = fontLevel <= 2 && spacingLevel <= 2
       ? '[&_aside]:!py-2 [&_main]:!py-2 [&_header]:!mb-1 [&_[style*="padding"]]:!p-2'
       : '';
 
-    return `${fontClasses} ${spacingClasses} ${compactExtras}`.trim();
+    return compactExtras.trim();
+  };
+
+  // Generate CSS overrides that use !important to bypass template inline styles
+  const getStyleOverrides = (): string => {
+    const fs = 8 + (fontLevel - 1) * (6 / 9);
+    // Line height: Bigger jumps - from 1.1 (level 1) to 1.9 (level 10)
+    const lh = 1.1 + (spacingLevel - 1) * (0.8 / 9);
+    // Section gaps: Bigger jumps - from 2px (level 1, tighter) to 32px (level 10)
+    const secGap = 2 + (spacingLevel - 1) * (30 / 9);
+    // Item gaps: Bigger jumps - from 0.5px (level 1) to 8px (level 10)
+    const itemGap = 0.5 + (spacingLevel - 1) * (7.5 / 9);
+    // Paragraph gaps: More pronounced - from 0px (level 1) to 16px (level 10)
+    const pGap = (spacingLevel - 1) * (16 / 9);
+    // Page padding: Bigger jumps - from 6mm (level 1, tighter) to 20mm (level 10)
+    const safePad = 6 + (spacingLevel - 1) * (14 / 9);
+
+    return `
+      .smart-resume-override p,
+      .smart-resume-override li,
+      .smart-resume-override td {
+        font-size: ${fs}px !important;
+        line-height: ${lh} !important;
+      }
+      .smart-resume-override p {
+        margin-bottom: ${pGap}px !important;
+        margin-top: 0 !important;
+      }
+      .smart-resume-override li {
+        margin-bottom: ${itemGap}px !important;
+      }
+      .smart-resume-override ul,
+      .smart-resume-override ol {
+        margin-top: ${itemGap}px !important;
+        margin-bottom: ${itemGap}px !important;
+      }
+      .smart-resume-override .a4-safe-area {
+        padding: ${safePad}mm !important;
+      }
+      .smart-resume-override div[style*="margin-bottom"],
+      .smart-resume-override section[style*="margin-bottom"],
+      .smart-resume-override [class*="section"] {
+        margin-bottom: ${secGap}px !important;
+      }
+      .smart-resume-override h1,
+      .smart-resume-override h2,
+      .smart-resume-override h3 {
+        margin-bottom: ${secGap * 0.6}px !important;
+        margin-top: ${secGap * 0.8}px !important;
+      }
+    `;
   };
 
   // Handle template change
@@ -369,9 +432,12 @@ export function SmartResumePreview({
         </div>
       )}
 
+      {/* Dynamic style overrides for font/spacing sliders */}
+      <style dangerouslySetInnerHTML={{ __html: getStyleOverrides() }} />
+
       {/* PREVIEW AREA */}
-      <div 
-        ref={containerRef} 
+      <div
+        ref={containerRef}
         className="flex-1 overflow-hidden relative w-full bg-slate-200/50"
         onClick={() => {
           setShowTemplateDropdown(false);
@@ -396,7 +462,7 @@ export function SmartResumePreview({
             )}
           >
             {/* Content wrapper for overflow measurement */}
-            <div ref={contentRef} style={getDynamicStyles()}>
+            <div ref={contentRef} className="smart-resume-override" style={getDynamicStyles()}>
               <ResumePreview
                 data={data}
                 templateId={activeTemplate}
