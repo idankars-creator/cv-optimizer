@@ -1,9 +1,9 @@
 import { NextRequest, NextResponse } from "next/server";
-import OpenAI from "openai";
+import Anthropic from "@anthropic-ai/sdk";
 import { extractText } from "unpdf";
 
-const openai = new OpenAI({
-  apiKey: process.env.OPENAI_API_KEY,
+const anthropic = new Anthropic({
+  apiKey: process.env.ANTHROPIC_API_KEY,
 });
 
 export const runtime = "nodejs";
@@ -20,9 +20,9 @@ type SkillPlacement = {
 
 export async function POST(request: NextRequest) {
   try {
-    if (!process.env.OPENAI_API_KEY) {
+    if (!process.env.ANTHROPIC_API_KEY) {
       return NextResponse.json(
-        { error: "Missing required environment variable: OPENAI_API_KEY" },
+        { error: "Missing required environment variable: ANTHROPIC_API_KEY" },
         { status: 500 }
       );
     }
@@ -154,26 +154,23 @@ Return a JSON object with this structure:
 
 Return ONLY valid JSON, no other text.`;
 
-    const response = await openai.chat.completions.create({
-      model: "gpt-4o",
+    const response = await anthropic.messages.create({
+      model: "claude-sonnet-4-5-20250929",
+      max_tokens: 4096,
+      system: "You are a professional resume writer. You help candidates accurately represent their real experience. You NEVER fabricate or exaggerate. Always respond with valid JSON.",
       messages: [
-        {
-          role: "system",
-          content: "You are a professional resume writer. You help candidates accurately represent their real experience. You NEVER fabricate or exaggerate. Always respond with valid JSON.",
-        },
         {
           role: "user",
           content: optimizationPrompt,
         },
       ],
       temperature: 0.5,
-      response_format: { type: "json_object" },
     });
 
-    const content = response.choices[0]?.message?.content;
+    const content = response.content[0].type === 'text' ? response.content[0].text : '';
 
     if (!content) {
-      throw new Error("No response from OpenAI");
+      throw new Error("No response from Anthropic");
     }
 
     const result = JSON.parse(content);

@@ -1,9 +1,9 @@
 import { NextRequest, NextResponse } from "next/server";
-import OpenAI from "openai";
+import Anthropic from "@anthropic-ai/sdk";
 import { extractText } from "unpdf";
 
-const openai = new OpenAI({
-  apiKey: process.env.OPENAI_API_KEY,
+const anthropic = new Anthropic({
+  apiKey: process.env.ANTHROPIC_API_KEY,
 });
 
 /**
@@ -23,8 +23,8 @@ function cleanJsonResponse(text: string): string {
  * but returning only the score and summary.
  */
 export async function POST(request: NextRequest) {
-  if (!process.env.OPENAI_API_KEY) {
-    console.error("OPENAI_API_KEY is not configured");
+  if (!process.env.ANTHROPIC_API_KEY) {
+    console.error("ANTHROPIC_API_KEY is not configured");
     return NextResponse.json(
       { error: "Service temporarily unavailable. Please try again later." },
       { status: 503 }
@@ -69,7 +69,13 @@ export async function POST(request: NextRequest) {
 
     // Use the SAME analysis prompt structure as the main optimizer
     // This ensures consistent scoring methodology
-    const analysisPrompt = `You are an expert HR consultant analyzing a resume for a specific target role.
+    const analysisPrompt = `You are a Senior Technical Recruiter and ATS Auditor.
+Your goal is to screen candidates ruthlessly based on their TARGET ROLE.
+
+════════════════════════════════════════════════════════════════════════════════
+STRICT SCORING AUDIT (Look at ORIGINAL Resume Data)
+════════════════════════════════════════════════════════════════════════════════
+**⚠️ CRITICAL: Apply HARSH scoring rules. This must match the logic used in the full optimizer.**
 
 ## Resume:
 ${cvText.slice(0, 8000)}
@@ -77,51 +83,86 @@ ${cvText.slice(0, 8000)}
 ## Target Role:
 ${targetRole.trim()}
 
-## Your Task:
-Analyze how well this resume matches the TARGET ROLE requirements. Consider:
+STEP 1: KNOCKOUT CHECK (Immediate Disqualifiers)
+────────────────────────────────────────────────
+- **Domain Mismatch:** Is the candidate's current role fundamentally different from the target?
+  Examples: Lawyer → Engineer, Sales → Developer, Teacher → Data Scientist, Analyst → Software Engineer
+  → IF YES: Score MUST be < 35. This is an IMMEDIATE REJECT.
 
-1. **Keyword Coverage**: Does the resume contain keywords, skills, and technologies typically required for "${targetRole}"?
-2. **Experience Relevance**: Does the work history show relevant experience for this role?
-3. **Seniority Fit**: Does the candidate's experience level match the role expectations?
-4. **Clarity & Impact**: Are achievements quantified? Are responsibilities clearly stated?
-5. **Missing Must-Haves**: What critical skills/experiences for "${targetRole}" are NOT demonstrated?
+- **Tech Stack Gap:** Does the CV miss >50% of critical hard skills typically required for "${targetRole}"?
+  → IF YES: Deduct 30 points from whatever score you calculate.
 
-SCORING GUIDANCE:
-- 85-100: Excellent match - resume strongly demonstrates required skills and experience for ${targetRole}
-- 70-84: Good match - most requirements met, minor gaps
-- 55-69: Moderate match - some relevant experience but significant gaps for this specific role
-- 40-54: Weak match - limited relevant experience for ${targetRole}
-- 0-39: Poor match - resume doesn't align with ${targetRole} requirements
+STEP 2: SENIORITY CALCULATION
+────────────────────────────────────────────────
+Estimate candidate's years of RELEVANT experience and compare to typical role requirements:
 
-The score must be ROLE-SPECIFIC. The same resume should score differently for "Software Engineer" vs "Product Manager" vs "Sales Representative" based on what skills and experience each role requires.
+| Candidate Level | Target Level | MAX SCORE |
+|-----------------|--------------|-----------|
+| Junior (0-2 YOE) | Senior (5+ req) | 45 |
+| Junior (0-2 YOE) | Mid (3+ req) | 55 |
+| Mid (2-4 YOE) | Senior (5+ req) | 60 |
+| Mid (2-4 YOE) | Lead/Staff | 50 |
+| Intern/Student | Any Full-Time | 40 |
 
+STEP 3: ROLE FAMILY CHECK
+────────────────────────────────────────────────
+These are DIFFERENT job families - do NOT treat them as equivalent:
+- Engineering: Software Engineer, Developer, Architect, DevOps
+- Analytics: Data Analyst, Product Analyst, Business Analyst, BI Analyst  
+- Data Science: Data Scientist, ML Engineer
+- Product: Product Manager, Product Owner
+- Design: UX/UI Designer
+
+| Career Change | MAX SCORE |
+|---------------|-----------|
+| Analyst → Engineer | 50 |
+| PM → Engineer | 45 |
+| Designer → Engineer | 40 |
+| Unrelated (Sales, Legal, HR) → Engineer | 30 |
+
+STEP 4: FINAL BASELINE SCORE (Apply all caps above)
+────────────────────────────────────────────────
+- **85-100 (Exceptional):** Perfect role + seniority + tech stack match for ${targetRole}
+- **70-84 (Strong):** Same role family, meets seniority, minor skill gaps
+- **55-69 (Moderate):** Adjacent role OR minor seniority gap, some skill overlap
+- **40-54 (Weak):** Different role family OR significant gaps
+- **0-39 (Reject):** Failed knockout check OR multiple major mismatches
+
+CONCRETE EXAMPLES (Use these as calibration):
+- Product Analyst (3y) → Senior Software Engineer: Score 30-40
+- Junior Dev (1y) → Senior Dev (5y+ req): Score 35-45
+- Senior Java Dev → Senior Python Dev: Score 60-70
+- Marketing Manager → Software Engineer: Score 20-30
+- Senior React Dev → Senior React Dev: Score 80-95
+
+════════════════════════════════════════════════════════════════════════════════
+OUTPUT FORMAT
+════════════════════════════════════════════════════════════════════════════════
 Return ONLY a JSON object with exactly these fields:
 {
-  "overallScore": <number 0-100 - role-specific match score>,
-  "summary": "<one sentence explaining why this score for this specific role, mentioning key matches or gaps>"
+  "overallScore": <number 0-100 - HARSH, STRICT score based on the rubric above>,
+  "summary": "<one brutally honest sentence explaining the score: mention specific knockout/mismatch if found>"
 }
 
 Return ONLY the JSON object, no markdown, no other text.`;
 
-    // Use gpt-4o for better analysis (same as optimizer)
-    const response = await openai.chat.completions.create({
-      model: "gpt-4o",
+    const systemPrompt = "You are a Senior Technical Recruiter and ATS Auditor. Apply harsh, realistic scoring. Always respond with valid JSON only.";
+
+    // Use Claude for better analysis
+    const response = await anthropic.messages.create({
+      model: "claude-sonnet-4-5-20250929",
+      max_tokens: 400,
+      system: systemPrompt,
       messages: [
-        {
-          role: "system",
-          content: "You are an expert resume analyst. Always respond with valid JSON only.",
-        },
         {
           role: "user",
           content: analysisPrompt,
         },
       ],
-      temperature: 0.5,
-      max_tokens: 300,
-      response_format: { type: "json_object" },
+      temperature: 0.3,
     });
 
-    const content = response.choices[0]?.message?.content || "";
+    const content = response.content[0].type === 'text' ? response.content[0].text : "";
     
     if (!content) {
       return NextResponse.json({
