@@ -70,10 +70,11 @@ export function TemplatePreviewCard({
   });
 
   const handleDownloadClick = () => {
-    if (!isSignedIn) {
-      setShowSignInPrompt(true);
-      return;
-    }
+    // Authentication temporarily disabled - all features are now public
+    // if (!isSignedIn) {
+    //   setShowSignInPrompt(true);
+    //   return;
+    // }
     handlePrint();
   };
 

@@ -73,10 +73,11 @@ export function TemplateDownloadCard({
 
   // Direct PDF download (no print dialog)
   const handleDownloadPdf = async () => {
-    if (!isSignedIn) {
-      setShowSignInPrompt(true);
-      return;
-    }
+    // Authentication temporarily disabled - all features are now public
+    // if (!isSignedIn) {
+    //   setShowSignInPrompt(true);
+    //   return;
+    // }
     
     if (!printRef.current) return;
     
@@ -96,10 +97,11 @@ export function TemplateDownloadCard({
 
   // Word document download
   const handleDownloadWord = async () => {
-    if (!isSignedIn) {
-      setShowSignInPrompt(true);
-      return;
-    }
+    // Authentication temporarily disabled - all features are now public
+    // if (!isSignedIn) {
+    //   setShowSignInPrompt(true);
+    //   return;
+    // }
     
     setIsDownloading(true);
     setDownloadType("word");
