@@ -271,7 +271,8 @@ export function AnalysisResults({ results, coverLetterTab, onEnhanceWithDeepDive
   
   const tabs = [
     { id: "overview" as const, label: "Overview", step: 1 },
-    ...(onEnhanceWithDeepDive ? [{ id: "enhance" as const, label: "Enhance", step: 2, highlight: true }] : []),
+    // ENHANCE FEATURE TEMPORARILY HIDDEN
+    // ...(onEnhanceWithDeepDive ? [{ id: "enhance" as const, label: "Enhance", step: 2, highlight: true }] : []),
     { id: "changes" as const, label: `Review Changes`, step: 3, count: pendingChangesCount > 0 ? pendingChangesCount : undefined, badge: acceptedChangesCount > 0 ? `${acceptedChangesCount} accepted` : undefined },
     { id: "optimized" as const, label: "Optimized CV", step: 4 },
     ...(coverLetterTab ? [{ id: "cover-letter" as const, label: "Cover Letter", step: 5 }] : []),
@@ -545,8 +546,8 @@ export function AnalysisResults({ results, coverLetterTab, onEnhanceWithDeepDive
               </div>
             </div>
 
-            {/* Continue Button */}
-            {onEnhanceWithDeepDive && (
+            {/* Continue Button - ENHANCE FEATURE TEMPORARILY HIDDEN */}
+            {/* {onEnhanceWithDeepDive && (
               <div className="flex justify-end pt-4 border-t border-slate-100">
                 <button
                   onClick={() => setActiveTab("enhance")}
@@ -556,7 +557,7 @@ export function AnalysisResults({ results, coverLetterTab, onEnhanceWithDeepDive
                   <ChevronRight className="w-5 h-5" />
                 </button>
               </div>
-            )}
+            )} */}
 
           </div>
         )}
@@ -796,8 +797,8 @@ export function AnalysisResults({ results, coverLetterTab, onEnhanceWithDeepDive
           </div>
         )}
 
-        {/* Enhance Tab - Missing Skills Placement */}
-        {activeTab === "enhance" && onEnhanceWithDeepDive && (
+        {/* Enhance Tab - Missing Skills Placement - ENHANCE FEATURE TEMPORARILY HIDDEN */}
+        {false && activeTab === "enhance" && onEnhanceWithDeepDive && (
           <div className="flex-1 min-h-0 flex flex-col overflow-hidden">
             {/* Header */}
             <div className="bg-gradient-to-r from-violet-500 to-indigo-600 rounded-xl p-6 text-white mb-6 flex-shrink-0">

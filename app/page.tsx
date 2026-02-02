@@ -564,11 +564,14 @@ export default function LandingPage() {
               <Logo variant="light" size="md" />
             </div>
             <div className="flex items-center gap-10 text-sm font-light tracking-wide">
-              <a href="#" className="hover:text-white transition-colors">Privacy</a>
-              <a href="#" className="hover:text-white transition-colors">Terms</a>
-              <a href="#" className="hover:text-white transition-colors">Contact</a>
+              <Link href="/privacy" className="hover:text-white transition-colors">Privacy</Link>
+              <Link href="/terms" className="hover:text-white transition-colors">Terms</Link>
+              <Link href="/refund-policy" className="hover:text-white transition-colors">Refund Policy</Link>
+              <Link href="/contact" className="hover:text-white transition-colors">
+                Contact
+              </Link>
             </div>
-            <p className="text-sm font-light">© 2024 Hired. All rights reserved.</p>
+            <p className="text-sm font-light">© 2026 Hired. All rights reserved.</p>
           </div>
         </div>
       </footer>
