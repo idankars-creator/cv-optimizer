@@ -168,7 +168,9 @@ export default function ResultsPage() {
           }
           jobTitle={payload.meta.jobTitle}
           isEnhancing={isEnhancing}
-          onEnhanceWithDeepDive={async (answers) => {
+          // ENHANCE FEATURE TEMPORARILY HIDDEN
+          onEnhanceWithDeepDive={undefined}
+          /* onEnhanceWithDeepDive={async (answers) => {
             setIsEnhancing(true);
             try {
               const formData = new FormData();
@@ -219,7 +221,7 @@ export default function ResultsPage() {
             } finally {
               setIsEnhancing(false);
             }
-          }}
+          }} */
         />
       </main>
 
