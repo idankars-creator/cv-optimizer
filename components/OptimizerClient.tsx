@@ -177,35 +177,36 @@ export function OptimizerClient() {
       return;
     }
     
-    if (!isSignedIn) {
-      // Save draft including file as base64
-      const saveDraft = async () => {
-        const draft: Record<string, string | null> = {
-          cvText,
-          cvFileName: cvFile?.name || null,
-          cvFileMimeType: cvFile?.type || null,
-          jobTitle,
-          jobDescription,
-          jobUrl,
-          summary,
-        };
-        
-        // Convert file to base64 if present
-        if (cvFile) {
-          try {
-            draft.cvFileBase64 = await fileToBase64(cvFile);
-          } catch (err) {
-            console.error("Failed to convert file to base64:", err);
-          }
-        }
-        
-        localStorage.setItem(DRAFT_KEY, JSON.stringify(draft));
-        openAuthModal("analyze");
-      };
-      
-      saveDraft();
-      return;
-    }
+    // Authentication temporarily disabled - all features are now public
+    // if (!isSignedIn) {
+    //   // Save draft including file as base64
+    //   const saveDraft = async () => {
+    //     const draft: Record<string, string | null> = {
+    //       cvText,
+    //       cvFileName: cvFile?.name || null,
+    //       cvFileMimeType: cvFile?.type || null,
+    //       jobTitle,
+    //       jobDescription,
+    //       jobUrl,
+    //       summary,
+    //     };
+    //     
+    //     // Convert file to base64 if present
+    //     if (cvFile) {
+    //       try {
+    //         draft.cvFileBase64 = await fileToBase64(cvFile);
+    //       } catch (err) {
+    //         console.error("Failed to convert file to base64:", err);
+    //       }
+    //     }
+    //     
+    //     localStorage.setItem(DRAFT_KEY, JSON.stringify(draft));
+    //     openAuthModal("analyze");
+    //   };
+    //   
+    //   saveDraft();
+    //   return;
+    // }
 
     setError("");
     setIsAnalyzing(true);

@@ -50,14 +50,14 @@ function wrapLineToWidth(line: string, maxWidth: number, font: PDFFontLike, font
 
 export async function POST(request: NextRequest) {
   try {
-    // Require authentication to download PDFs
-    const { userId } = await auth();
-    if (!userId) {
-      return NextResponse.json(
-        { error: "Please sign in to download your cover letter" },
-        { status: 401 }
-      );
-    }
+    // Authentication temporarily disabled - all features are now public
+    // const { userId } = await auth();
+    // if (!userId) {
+    //   return NextResponse.json(
+    //     { error: "Please sign in to download your cover letter" },
+    //     { status: 401 }
+    //   );
+    // }
 
     const body = await request.json().catch(() => null);
     const text = sanitizeForWinAnsi(((body?.text as string | undefined) ?? "").trim());
