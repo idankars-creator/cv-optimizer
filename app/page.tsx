@@ -564,6 +564,7 @@ export default function LandingPage() {
               <Logo variant="light" size="md" />
             </div>
             <div className="flex items-center gap-10 text-sm font-light tracking-wide">
+              <Link href="/pricing" className="hover:text-white transition-colors">Pricing</Link>
               <Link href="/privacy" className="hover:text-white transition-colors">Privacy</Link>
               <Link href="/terms" className="hover:text-white transition-colors">Terms</Link>
               <Link href="/refund-policy" className="hover:text-white transition-colors">Refund Policy</Link>
