@@ -1,0 +1,56 @@
+"use client";
+
+import { useEffect, useState } from "react";
+import { Gift, X } from "lucide-react";
+
+interface FreeCreditToastProps {
+  isOpen: boolean;
+  onClose: () => void;
+}
+
+export function FreeCreditToast({ isOpen, onClose }: FreeCreditToastProps) {
+  const [isVisible, setIsVisible] = useState(false);
+
+  useEffect(() => {
+    if (isOpen) {
+      setIsVisible(true);
+      // Auto-close after 5 seconds
+      const timer = setTimeout(() => {
+        setIsVisible(false);
+        setTimeout(onClose, 300); // Wait for animation
+      }, 5000);
+      return () => clearTimeout(timer);
+    }
+  }, [isOpen, onClose]);
+
+  if (!isOpen) return null;
+
+  return (
+    <div
+      className={`fixed top-4 right-4 z-[100] transition-all duration-300 ${
+        isVisible ? "opacity-100 translate-y-0" : "opacity-0 -translate-y-2"
+      }`}
+    >
+      <div className="bg-gradient-to-r from-indigo-600 to-purple-600 text-white rounded-lg shadow-2xl p-4 flex items-center gap-3 min-w-[320px] max-w-md">
+        <div className="flex-shrink-0">
+          <Gift className="w-6 h-6" />
+        </div>
+        <div className="flex-1">
+          <p className="font-semibold text-sm">🎁 Sign up now & get 1 FREE Credit!</p>
+          <p className="text-xs text-indigo-100 mt-0.5">
+            Use it to download or optimize your resume
+          </p>
+        </div>
+        <button
+          onClick={() => {
+            setIsVisible(false);
+            setTimeout(onClose, 300);
+          }}
+          className="flex-shrink-0 p-1 hover:bg-white/20 rounded transition-colors"
+        >
+          <X className="w-4 h-4" />
+        </button>
+      </div>
+    </div>
+  );
+}

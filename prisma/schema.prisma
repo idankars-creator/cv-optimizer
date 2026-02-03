@@ -56,3 +56,11 @@ model Purchase {
 
   user          User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 }
+
+model Coupon {
+  id        String   @id @default(cuid())
+  code      String   @unique
+  credits   Int      // How many credits it gives
+  isActive  Boolean  @default(true)
+  createdAt DateTime @default(now())
+}

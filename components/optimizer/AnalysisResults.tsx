@@ -25,7 +25,7 @@ interface AnalysisResultsProps {
 
 export default function AnalysisResults({ optimizedData, score, improvements }: AnalysisResultsProps) {
   // State for the preview
-  const [selectedTemplate, setSelectedTemplate] = useState<BuilderTemplateId>("modern-sidebar");
+  const [selectedTemplate, setSelectedTemplate] = useState<BuilderTemplateId>("ivy-league");
   const [selectedColor, setSelectedColor] = useState<ThemeColor>("indigo");
   
   // Download state

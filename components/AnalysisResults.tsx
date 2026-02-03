@@ -133,7 +133,7 @@ const TEMPLATE_OPTIONS: { id: BuilderTemplateId; name: string; icon: string; pre
 export function AnalysisResults({ results, coverLetterTab, onEnhanceWithDeepDive, isEnhancing, jobTitle, onTabChange }: AnalysisResultsProps) {
   const [activeTab, setActiveTab] = useState<"overview" | "changes" | "skills" | "optimized" | "cover-letter" | "enhance">("overview");
   const [copiedOptimized, setCopiedOptimized] = useState(false);
-  const [selectedTemplate, setSelectedTemplate] = useState<BuilderTemplateId>("modern-sidebar");
+  const [selectedTemplate, setSelectedTemplate] = useState<BuilderTemplateId>("ivy-league");
   const [isEditMode, setIsEditMode] = useState(false);
   
   // Fixed accent color for consistency (updated to indigo)

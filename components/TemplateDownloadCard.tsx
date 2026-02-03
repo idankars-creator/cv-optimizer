@@ -11,6 +11,7 @@ import { exportToPdf } from "@/utils/exportToPdf";
 import { exportToWord } from "@/utils/exportToWord";
 import { Watermark } from "@/components/Watermark";
 import Link from "next/link";
+import { FreeCreditToast } from "@/components/FreeCreditToast";
 
 interface TemplateDownloadCardProps {
   templateId: AllTemplateId;
@@ -41,6 +42,7 @@ export function TemplateDownloadCard({
   const [showFullPreview, setShowFullPreview] = useState(false);
   const [showSignInPrompt, setShowSignInPrompt] = useState(false);
   const [showNoCreditsModal, setShowNoCreditsModal] = useState(false);
+  const [showFreeCreditToast, setShowFreeCreditToast] = useState(false);
   const [isDownloading, setIsDownloading] = useState(false);
   const [downloadType, setDownloadType] = useState<"pdf" | "word" | null>(null);
   const [showWatermark, setShowWatermark] = useState(true);
@@ -78,7 +80,11 @@ export function TemplateDownloadCard({
   // Direct PDF download (no print dialog)
   const handleDownloadPdf = async () => {
     if (!isSignedIn) {
-      setShowSignInPrompt(true);
+      // Show free credit toast before sign-in prompt
+      setShowFreeCreditToast(true);
+      setTimeout(() => {
+        setShowSignInPrompt(true);
+      }, 500); // Small delay to show toast first
       return;
     }
     
@@ -127,7 +133,11 @@ export function TemplateDownloadCard({
   // Word document download
   const handleDownloadWord = async () => {
     if (!isSignedIn) {
-      setShowSignInPrompt(true);
+      // Show free credit toast before sign-in prompt
+      setShowFreeCreditToast(true);
+      setTimeout(() => {
+        setShowSignInPrompt(true);
+      }, 500); // Small delay to show toast first
       return;
     }
     
@@ -408,6 +418,12 @@ export function TemplateDownloadCard({
           </div>
         </div>
       )}
+
+      {/* Free Credit Toast */}
+      <FreeCreditToast
+        isOpen={showFreeCreditToast}
+        onClose={() => setShowFreeCreditToast(false)}
+      />
     </>
   );
 }

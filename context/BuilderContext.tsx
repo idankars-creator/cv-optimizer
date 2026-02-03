@@ -110,7 +110,7 @@ const defaultState: BuilderContextState = {
   isAIThinking: false,
   aiSuggestion: null,
   isEditMode: true,
-  selectedTemplateId: "modern-sidebar",
+  selectedTemplateId: "ivy-league",
   themeColor: "indigo",
 };
 
@@ -151,7 +151,7 @@ interface BuilderProviderProps {
 export function BuilderProvider({ 
   children, 
   initialEditMode = true,
-  initialTemplate = "modern-sidebar",
+  initialTemplate = "ivy-league",
   initialThemeColor = "indigo",
 }: BuilderProviderProps) {
   // State
