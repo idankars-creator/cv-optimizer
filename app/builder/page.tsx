@@ -44,6 +44,8 @@ import { convertToPreviewData } from "@/lib/resumeDataConverter";
 import { BuilderTemplateId, ThemeColor } from "@/context/BuilderContext";
 import { Logo } from "@/components/Logo";
 import { UserButton } from "@clerk/nextjs";
+import { CreditBalance } from "@/components/CreditBalance";
+import { FreeCreditToast } from "@/components/FreeCreditToast";
 
 // Month options for date picker
 const MONTHS = [
