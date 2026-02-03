@@ -54,11 +54,10 @@ function TemplateCard({
   });
 
   const handleDownloadClick = () => {
-    // Authentication temporarily disabled - all features are now public
-    // if (!isSignedIn) {
-    //   onAuthRequired();
-    //   return;
-    // }
+    if (!isSignedIn) {
+      onAuthRequired();
+      return;
+    }
     handlePrint();
   };
 

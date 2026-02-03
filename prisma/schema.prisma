@@ -12,11 +12,13 @@ datasource db {
 model User {
   id        String   @id @unique // Matches Clerk User ID (user_2N...)
   email     String   @unique
+  credits   Int      @default(1) // New users get 1 free credit
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
   
   resumes   Resume[]
   feedbacks Feedback[]
+  purchases Purchase[]
 }
 
 model Resume {
@@ -41,4 +43,16 @@ model Feedback {
 
   userId    String?
   user      User?    @relation(fields: [userId], references: [id])
+}
+
+model Purchase {
+  id            String   @id @default(cuid())
+  userId        String
+  amount        Float
+  plan          String
+  paypalOrderId String?
+  status        String   @default("completed")
+  createdAt     DateTime @default(now())
+
+  user          User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 }

@@ -9,6 +9,8 @@ import { ALL_TEMPLATES, AllTemplateId } from "@/components/cv-templates";
 import { formatName, formatJobTitle } from "@/utils/formatting";
 import { exportToPdf } from "@/utils/exportToPdf";
 import { exportToWord } from "@/utils/exportToWord";
+import { Watermark } from "@/components/Watermark";
+import Link from "next/link";
 
 interface TemplateDownloadCardProps {
   templateId: AllTemplateId;
@@ -38,8 +40,10 @@ export function TemplateDownloadCard({
   const printRef = useRef<HTMLDivElement>(null);
   const [showFullPreview, setShowFullPreview] = useState(false);
   const [showSignInPrompt, setShowSignInPrompt] = useState(false);
+  const [showNoCreditsModal, setShowNoCreditsModal] = useState(false);
   const [isDownloading, setIsDownloading] = useState(false);
   const [downloadType, setDownloadType] = useState<"pdf" | "word" | null>(null);
+  const [showWatermark, setShowWatermark] = useState(true);
   const { isSignedIn } = useAuth();
   const info = ALL_TEMPLATES[templateId];
   const builderTemplateId = templateIdMap[templateId];
@@ -73,11 +77,10 @@ export function TemplateDownloadCard({
 
   // Direct PDF download (no print dialog)
   const handleDownloadPdf = async () => {
-    // Authentication temporarily disabled - all features are now public
-    // if (!isSignedIn) {
-    //   setShowSignInPrompt(true);
-    //   return;
-    // }
+    if (!isSignedIn) {
+      setShowSignInPrompt(true);
+      return;
+    }
     
     if (!printRef.current) return;
     
@@ -85,10 +88,36 @@ export function TemplateDownloadCard({
     setDownloadType("pdf");
     
     try {
+      // First, use a credit
+      const creditResponse = await fetch("/api/use-credit", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+      });
+
+      const creditResult = await creditResponse.json();
+
+      if (!creditResult.success) {
+        setShowNoCreditsModal(true);
+        setIsDownloading(false);
+        setDownloadType(null);
+        return;
+      }
+
+      // Hide watermark temporarily
+      setShowWatermark(false);
+      
+      // Small delay to ensure watermark is hidden
+      await new Promise(resolve => setTimeout(resolve, 100));
+      
+      // Generate PDF
       await exportToPdf(printRef.current, `${fileName}-${info.name}`);
+      
+      // Restore watermark after download
+      setShowWatermark(true);
     } catch (error) {
       console.error("PDF export failed:", error);
       alert("PDF export failed. Please try again.");
+      setShowWatermark(true); // Restore watermark on error
     } finally {
       setIsDownloading(false);
       setDownloadType(null);
@@ -97,20 +126,45 @@ export function TemplateDownloadCard({
 
   // Word document download
   const handleDownloadWord = async () => {
-    // Authentication temporarily disabled - all features are now public
-    // if (!isSignedIn) {
-    //   setShowSignInPrompt(true);
-    //   return;
-    // }
+    if (!isSignedIn) {
+      setShowSignInPrompt(true);
+      return;
+    }
     
     setIsDownloading(true);
     setDownloadType("word");
     
     try {
+      // First, use a credit
+      const creditResponse = await fetch("/api/use-credit", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+      });
+
+      const creditResult = await creditResponse.json();
+
+      if (!creditResult.success) {
+        setShowNoCreditsModal(true);
+        setIsDownloading(false);
+        setDownloadType(null);
+        return;
+      }
+
+      // Hide watermark temporarily
+      setShowWatermark(false);
+      
+      // Small delay to ensure watermark is hidden
+      await new Promise(resolve => setTimeout(resolve, 100));
+      
+      // Generate Word document
       await exportToWord(formattedData, `${fileName}-${info.name}`);
+      
+      // Restore watermark after download
+      setShowWatermark(true);
     } catch (error) {
       console.error("Word export failed:", error);
       alert("Word export failed. Please try again.");
+      setShowWatermark(true); // Restore watermark on error
     } finally {
       setIsDownloading(false);
       setDownloadType(null);
@@ -255,8 +309,9 @@ export function TemplateDownloadCard({
             </div>
 
             {/* Preview Content */}
-            <div className="flex-1 overflow-auto p-6 bg-slate-100 flex justify-center">
-              <div className="shadow-2xl">
+            <div className="flex-1 overflow-auto p-6 bg-slate-100 flex justify-center relative">
+              {showWatermark && <Watermark />}
+              <div className="shadow-2xl relative z-10">
                 <ResumePreview 
                   data={formattedData} 
                   templateId={builderTemplateId} 
@@ -301,6 +356,50 @@ export function TemplateDownloadCard({
               </SignInButton>
               <button
                 onClick={() => setShowSignInPrompt(false)}
+                className="w-full px-6 py-3 bg-slate-100 hover:bg-slate-200 text-slate-700 font-medium rounded-xl transition-colors"
+              >
+                Maybe Later
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* No Credits Modal */}
+      {showNoCreditsModal && (
+        <div 
+          className="fixed inset-0 z-[60] flex items-center justify-center bg-black/50 backdrop-blur-sm p-4"
+          onClick={() => setShowNoCreditsModal(false)}
+        >
+          <div 
+            className="relative bg-white border border-slate-200 rounded-2xl shadow-2xl p-8 max-w-md text-center"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <button
+              onClick={() => setShowNoCreditsModal(false)}
+              className="absolute top-4 right-4 p-1.5 hover:bg-slate-100 rounded-lg transition-colors"
+            >
+              <X className="w-5 h-5 text-slate-400" />
+            </button>
+            <div className="mb-4">
+              <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-amber-100 flex items-center justify-center">
+                <FileText className="w-8 h-8 text-amber-600" />
+              </div>
+              <h3 className="text-xl font-bold text-slate-900 mb-2">Out of Credits</h3>
+              <p className="text-slate-600 mb-4">
+                You need credits to download your CV. Get started with our Starter pack for just $3 and receive 5 credits!
+              </p>
+            </div>
+            <div className="flex flex-col gap-3">
+              <Link
+                href="/pricing"
+                onClick={() => setShowNoCreditsModal(false)}
+                className="w-full px-6 py-3 bg-indigo-600 hover:bg-indigo-700 text-white font-semibold rounded-xl transition-colors text-center"
+              >
+                Get Starter Pack ($3)
+              </Link>
+              <button
+                onClick={() => setShowNoCreditsModal(false)}
                 className="w-full px-6 py-3 bg-slate-100 hover:bg-slate-200 text-slate-700 font-medium rounded-xl transition-colors"
               >
                 Maybe Later

@@ -30,12 +30,14 @@ export async function POST(req: Request) {
 
       if (user) {
         // Ensure user exists in DB (sync Clerk -> Neon)
+        // New users get 1 free credit, existing users keep their credits
         await prisma.user.upsert({
           where: { id: user.id },
           update: { email: user.emailAddresses[0]?.emailAddress || "" },
           create: {
             id: user.id,
             email: user.emailAddresses[0]?.emailAddress || "no-email",
+            credits: 1, // New users start with 1 free credit
           },
         });
 

@@ -132,14 +132,14 @@ function canonicalSectionName(line: string): string | null {
 
 export async function POST(request: NextRequest) {
   try {
-    // Authentication temporarily disabled - all features are now public
-    // const { userId } = await auth();
-    // if (!userId) {
-    //   return NextResponse.json(
-    //     { error: "Please sign in to download your CV" },
-    //     { status: 401 }
-    //   );
-    // }
+    // Require authentication to download PDFs
+    const { userId } = await auth();
+    if (!userId) {
+      return NextResponse.json(
+        { error: "Please sign in to download your CV" },
+        { status: 401 }
+      );
+    }
 
     const body = await request.json().catch(() => null);
     const text = sanitizeForWinAnsi(((body?.text as string | undefined) ?? ""));
