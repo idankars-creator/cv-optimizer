@@ -52,11 +52,11 @@ export async function POST(request: Request) {
       const dbUser = await tx.user.upsert({
         where: { id: userId },
         update: { email: userEmail },
-        create: {
-          id: userId,
-          email: userEmail,
-          credits: 1, // New users start with 1 free credit
-        },
+          create: {
+            id: userId,
+            email: userEmail,
+            credits: 5, // New users start with 5 free credits
+          },
       });
 
       // Create purchase record

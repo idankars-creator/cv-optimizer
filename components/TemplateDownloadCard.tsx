@@ -12,6 +12,7 @@ import { exportToWord } from "@/utils/exportToWord";
 import { Watermark } from "@/components/Watermark";
 import Link from "next/link";
 import { FreeCreditToast } from "@/components/FreeCreditToast";
+import { toast } from "sonner";
 
 interface TemplateDownloadCardProps {
   templateId: AllTemplateId;
@@ -120,9 +121,15 @@ export function TemplateDownloadCard({
       
       // Restore watermark after download
       setShowWatermark(true);
+      
+      toast.success("Success!", {
+        description: "Your CV has been downloaded.",
+      });
     } catch (error) {
       console.error("PDF export failed:", error);
-      alert("PDF export failed. Please try again.");
+      toast.error("PDF export failed", {
+        description: "Please try again.",
+      });
       setShowWatermark(true); // Restore watermark on error
     } finally {
       setIsDownloading(false);
@@ -171,9 +178,15 @@ export function TemplateDownloadCard({
       
       // Restore watermark after download
       setShowWatermark(true);
+      
+      toast.success("Success!", {
+        description: "Your CV has been downloaded.",
+      });
     } catch (error) {
       console.error("Word export failed:", error);
-      alert("Word export failed. Please try again.");
+      toast.error("Word export failed", {
+        description: "Please try again.",
+      });
       setShowWatermark(true); // Restore watermark on error
     } finally {
       setIsDownloading(false);

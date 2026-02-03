@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { Gift, Check, X, Loader2 } from "lucide-react";
+import { toast } from "sonner";
 
 export function CouponRedeem() {
   const [code, setCode] = useState("");
@@ -31,12 +32,15 @@ export function CouponRedeem() {
       const data = await response.json();
 
       if (response.ok && data.success) {
-        setMessage({
-          type: "success",
-          text: `🎉 ${data.message} You now have ${data.totalCredits} credits!`,
+        toast.success("Coupon Redeemed!", {
+          description: `${data.message} You now have ${data.totalCredits} credits!`,
         });
         setCode(""); // Clear input on success
+        setMessage(null); // Clear message state
       } else {
+        toast.error("Invalid Coupon", {
+          description: data.error || "Failed to redeem coupon. Please try again.",
+        });
         setMessage({
           type: "error",
           text: data.error || "Failed to redeem coupon. Please try again.",
@@ -44,6 +48,9 @@ export function CouponRedeem() {
       }
     } catch (error) {
       console.error("Coupon redeem error:", error);
+      toast.error("Error", {
+        description: "An error occurred. Please try again.",
+      });
       setMessage({
         type: "error",
         text: "An error occurred. Please try again.",
