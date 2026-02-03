@@ -78,7 +78,7 @@ export default function BuilderPage() {
   
   // Preview panel state - default CLOSED to focus on form
   const [isPreviewOpen, setIsPreviewOpen] = useState(false);
-  const [selectedTemplate, setSelectedTemplate] = useState<BuilderTemplateId>("executive");
+  const [selectedTemplate, setSelectedTemplate] = useState<BuilderTemplateId>("ivy-league");
   const [selectedColor, setSelectedColor] = useState<ThemeColor>("indigo");
   
   // Auth modal for deferred authentication
@@ -111,6 +111,7 @@ export default function BuilderPage() {
                 <ArrowLeft className="w-4 h-4" strokeWidth={1.5} />
                 Back to Home
               </Link>
+              <CreditBalance />
               <UserButton appearance={{ elements: { avatarBox: "w-9 h-9 ring-2 ring-stone-200" } }} />
             </div>
           </div>
@@ -796,11 +797,18 @@ function CustomSectionsStep() {
 
 function ReviewStep() {
   const { resumeData } = useResumeStore();
+  const { isSignedIn } = useUser();
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [analysis, setAnalysis] = useState<{ score: number; suggestions: string[] } | null>(null);
+  const [showFreeCreditToast, setShowFreeCreditToast] = useState(false);
   const cvText = resumeToText(resumeData);
 
   const handleAnalyze = async () => {
+    // Check if user is signed in
+    if (!isSignedIn) {
+      setShowFreeCreditToast(true);
+      return;
+    }
     setIsAnalyzing(true);
     try {
       const response = await fetch("/api/analyze-resume", {
@@ -948,9 +956,15 @@ function ReviewStep() {
               fileName="My-CV"
               themeColor="indigo"
             />
-          ))}
+            ))}
         </div>
       </div>
+
+      {/* Free Credit Toast */}
+      <FreeCreditToast
+        isOpen={showFreeCreditToast}
+        onClose={() => setShowFreeCreditToast(false)}
+      />
     </div>
   );
 }

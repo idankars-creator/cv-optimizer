@@ -15,6 +15,7 @@ import {
 } from "@clerk/nextjs";
 import { Logo } from "@/components/Logo";
 import Link from "next/link";
+import { CreditBalance } from "@/components/CreditBalance";
 
 export function HomeClient({ initialCount }: { initialCount: number }) {
   const router = useRouter();
@@ -109,6 +110,7 @@ export function HomeClient({ initialCount }: { initialCount: number }) {
               Optimizer
             </Link>
             <SignedIn>
+              <CreditBalance />
               <UserButton 
                 appearance={{
                   elements: {

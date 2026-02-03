@@ -47,6 +47,7 @@ export default function LandingPage() {
               </SignUpButton>
             </SignedOut>
             <SignedIn>
+              <CreditBalance />
               <UserButton 
                 appearance={{
                   elements: {

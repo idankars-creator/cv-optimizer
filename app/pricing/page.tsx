@@ -2,6 +2,7 @@ import React from 'react';
 import Link from 'next/link';
 import { ArrowLeft, Check, X, Sparkles, Zap, Infinity, Gift } from 'lucide-react';
 import { PayPalButton } from '@/components/PayPalButton';
+import { CouponRedeem } from '@/components/CouponRedeem';
 
 export default function PricingPage() {
   return (
@@ -232,6 +233,11 @@ export default function PricingPage() {
             </div>
           </div>
 
+        </div>
+
+        {/* Coupon Redeem Section */}
+        <div className="mt-12 max-w-2xl mx-auto">
+          <CouponRedeem />
         </div>
 
         {/* Additional Info */}

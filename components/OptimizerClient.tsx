@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { UserButton, useUser, SignedIn, SignedOut, SignInButton } from "@clerk/nextjs";
 import { Logo } from "@/components/Logo";
 import Link from "next/link";
+import { CreditBalance } from "@/components/CreditBalance";
 import { 
   Upload, 
   FileText, 
@@ -20,6 +21,7 @@ import {
 } from "lucide-react";
 import { saveAnalysisToSession } from "@/lib/analysisSession";
 import { AuthModal, useAuthModal } from "@/components/shared/AuthModal";
+import { FreeCreditToast } from "@/components/FreeCreditToast";
 
 const DRAFT_KEY = "optimizer_draft";
 
@@ -48,6 +50,7 @@ const base64ToFile = (base64: string, fileName: string, mimeType: string): File 
 export function OptimizerClient() {
   const router = useRouter();
   const { isSignedIn, isLoaded } = useUser();
+  const [showFreeCreditToast, setShowFreeCreditToast] = useState(false);
   
   // CV State
   const [cvFile, setCvFile] = useState<File | null>(null);
@@ -178,6 +181,9 @@ export function OptimizerClient() {
     }
     
     if (!isSignedIn) {
+      // Show free credit toast before auth modal
+      setShowFreeCreditToast(true);
+      
       // Save draft including file as base64
       const saveDraft = async () => {
         const draft: Record<string, string | null> = {
@@ -200,7 +206,9 @@ export function OptimizerClient() {
         }
         
         localStorage.setItem(DRAFT_KEY, JSON.stringify(draft));
-        openAuthModal("analyze");
+        setTimeout(() => {
+          openAuthModal("analyze");
+        }, 500); // Small delay to show toast first
       };
       
       saveDraft();
@@ -303,6 +311,7 @@ export function OptimizerClient() {
             <span className="w-px h-4 bg-stone-300" />
             <span className="text-sm font-medium text-[#0A2647] tracking-wide">Optimizer</span>
             <SignedIn>
+              <CreditBalance />
               <UserButton 
                 appearance={{
                   elements: {
