@@ -10,6 +10,7 @@ import {
 import { Logo } from "@/components/Logo";
 import { HeroResumeVisual } from "@/components/landing/HeroResumeVisual";
 import { ActiveNavLinks } from "@/components/landing/ActiveNavLinks";
+import { CreditBalance } from "@/components/CreditBalance";
 
 export default function LandingPage() {
   return (

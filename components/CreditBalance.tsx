@@ -8,30 +8,40 @@ import { useEffect, useState } from "react";
 export function CreditBalance() {
   const { userId, isLoaded } = useAuth();
   const [credits, setCredits] = useState<number | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    if (!isLoaded || !userId) {
+    if (!isLoaded) {
+      setIsLoading(true);
+      return;
+    }
+
+    if (!userId) {
       setCredits(null);
+      setIsLoading(false);
       return;
     }
 
     // Fetch credits from API
     const fetchCredits = async () => {
       try {
+        setIsLoading(true);
         const response = await fetch("/api/get-credits");
         const data = await response.json();
         setCredits(data.credits ?? 0);
       } catch (error) {
         console.error("Failed to fetch credit balance:", error);
         setCredits(0);
+      } finally {
+        setIsLoading(false);
       }
     };
 
     fetchCredits();
   }, [userId, isLoaded]);
 
-  // If user is not logged in or not loaded, render nothing
-  if (!isLoaded || !userId || credits === null) {
+  // If user is not logged in or still loading, render nothing
+  if (!isLoaded || isLoading || !userId || credits === null) {
     return null;
   }
 
