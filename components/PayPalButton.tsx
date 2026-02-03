@@ -2,6 +2,7 @@
 
 import { PayPalScriptProvider, PayPalButtons } from "@paypal/react-paypal-js";
 import { useRouter } from "next/navigation";
+import { toast } from "sonner";
 
 interface PayPalButtonProps {
   amount: number;
@@ -60,14 +61,20 @@ export function PayPalButton({ amount, planName }: PayPalButtonProps) {
       const creditsResult = await creditsResponse.json();
 
       if (creditsResult.success) {
-        alert("Payment Successful! Credits have been added to your account.");
+        toast.success("Payment Successful!", {
+          description: `Credits have been added to your account. You now have ${creditsResult.totalCredits} credits.`,
+        });
         router.push("/dashboard");
       } else {
-        alert("Payment processed but there was an error adding credits. Please contact support.");
+        toast.error("Payment Error", {
+          description: "Payment processed but there was an error adding credits. Please contact support.",
+        });
       }
     } catch (error) {
       console.error("PayPal approval error:", error);
-      alert(`Payment processing failed: ${error instanceof Error ? error.message : "Please try again."}`);
+      toast.error("Payment Failed", {
+        description: error instanceof Error ? error.message : "Please try again.",
+      });
     }
   };
 
@@ -90,6 +97,11 @@ export function PayPalButton({ amount, planName }: PayPalButtonProps) {
           createOrder={(data, actions) => {
             return actions.order.create({
               intent: "CAPTURE",
+              application_context: {
+                shipping_preference: "NO_SHIPPING", // Remove address form for digital goods
+                user_action: "PAY_NOW",
+                brand_name: "Hired CV",
+              },
               purchase_units: [
                 {
                   amount: {
@@ -104,7 +116,9 @@ export function PayPalButton({ amount, planName }: PayPalButtonProps) {
           onApprove={handleApprove}
           onError={(err) => {
             console.error("PayPal error:", err);
-            alert("Payment error occurred. Please try again.");
+            toast.error("Payment Error", {
+              description: "An error occurred. Please try again.",
+            });
           }}
           onCancel={(data) => {
             console.log("Payment cancelled:", data);

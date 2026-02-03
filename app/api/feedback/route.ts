@@ -37,7 +37,7 @@ export async function POST(req: Request) {
           create: {
             id: user.id,
             email: user.emailAddresses[0]?.emailAddress || "no-email",
-            credits: 1, // New users start with 1 free credit
+            credits: 5, // New users start with 5 free credits
           },
         });
 

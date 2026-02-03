@@ -9,6 +9,7 @@ import {
   UserButton,
 } from "@clerk/nextjs";
 import { RatingWidget } from "@/components/feedback";
+import { Toaster } from "sonner";
 import "./globals.css";
 
 // Primary UI font
@@ -66,6 +67,7 @@ export default function RootLayout({
       <html lang="en" className="scroll-smooth">
         <body className={`${inter.variable} ${jetbrainsMono.variable} ${merriweather.variable} ${lato.variable} ${montserrat.variable} ${playfair.variable} font-sans`}>
           {children}
+          <Toaster position="top-center" richColors />
           {/* Global Feedback Widget */}
           <RatingWidget source="global" />
         </body>

@@ -8,6 +8,7 @@ import { SmartResumePreview, TemplateGallery } from "./shared";
 import parseRawCV from "@/lib/cvParser";
 import { exportToPdf } from "@/utils/exportToPdf";
 import { exportToWord } from "@/utils/exportToWord";
+import { toast } from "sonner";
 import {
   CheckCircle2,
   AlertTriangle,
@@ -242,7 +243,9 @@ export function AnalysisResults({ results, coverLetterTab, onEnhanceWithDeepDive
       await exportToPdf(pdfCaptureRef.current, `Optimized_Resume_${Date.now()}`);
     } catch (error) {
       console.error("PDF export failed:", error);
-      alert("PDF export failed. Please try again.");
+      toast.error("PDF export failed", {
+        description: "Please try again.",
+      });
     } finally {
       setIsDownloading(false);
       setDownloadType(null);
@@ -256,9 +259,15 @@ export function AnalysisResults({ results, coverLetterTab, onEnhanceWithDeepDive
     
     try {
       await exportToWord(resumeData, `Optimized_Resume_${Date.now()}`);
+      
+      toast.success("Success!", {
+        description: "Your CV has been downloaded.",
+      });
     } catch (error) {
       console.error("Word export failed:", error);
-      alert("Word export failed. Please try again.");
+      toast.error("Word export failed", {
+        description: "Please try again.",
+      });
     } finally {
       setIsDownloading(false);
       setDownloadType(null);

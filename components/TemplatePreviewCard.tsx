@@ -10,6 +10,7 @@ import {
   TEMPLATE_COMPONENTS,
 } from "./cv-templates";
 import { Watermark } from "@/components/Watermark";
+import { toast } from "sonner";
 
 interface TemplatePreviewCardProps {
   templateId: TemplateType;
@@ -86,16 +87,27 @@ export function TemplatePreviewCard({
       const creditResult = await creditResponse.json();
 
       if (!creditResult.success) {
-        // Show no credits modal (we'll add this)
-        alert("You need credits to download. Get started with our Starter pack for just $3!");
+        toast.error("You need credits to continue", {
+          description: "Get our Starter Pack for just $3!",
+          action: {
+            label: "View Pricing",
+            onClick: () => window.location.href = "/pricing",
+          },
+        });
         return;
       }
 
       // Proceed with download
       handlePrint();
+      
+      toast.success("Success!", {
+        description: "Your CV is ready.",
+      });
     } catch (error) {
       console.error("Credit check failed:", error);
-      alert("Failed to check credits. Please try again.");
+      toast.error("Failed to check credits", {
+        description: "Please try again.",
+      });
     }
   };
 

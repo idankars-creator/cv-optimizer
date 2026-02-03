@@ -22,11 +22,11 @@ export async function POST(request: Request) {
     const dbUser = await prisma.user.upsert({
       where: { id: userId },
       update: { email: userEmail },
-      create: {
-        id: userId,
-        email: userEmail,
-        credits: 1, // New users start with 1 free credit
-      },
+        create: {
+          id: userId,
+          email: userEmail,
+          credits: 5, // New users start with 5 free credits
+        },
     });
 
     // Check if user has credits

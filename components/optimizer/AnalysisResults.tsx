@@ -16,6 +16,7 @@ import { ResumePreviewData } from "@/components/builder/ResumePreview";
 import { BuilderTemplateId, ThemeColor } from "@/context/BuilderContext";
 import { exportToWord } from "@/utils/exportToWord";
 import { exportToPdf } from "@/utils/exportToPdf";
+import { toast } from "sonner";
 
 interface AnalysisResultsProps {
   optimizedData: ResumePreviewData;
@@ -46,7 +47,9 @@ export default function AnalysisResults({ optimizedData, score, improvements }: 
       await exportToPdf(pdfCaptureRef.current, `Resume_${optimizedData.name || "Optimized"}`);
     } catch (error) {
       console.error("PDF export failed:", error);
-      alert("PDF export failed. Please try again.");
+      toast.error("PDF export failed", {
+        description: "Please try again.",
+      });
     } finally {
       setIsDownloading(false);
       setDownloadType(null);
@@ -62,7 +65,9 @@ export default function AnalysisResults({ optimizedData, score, improvements }: 
       await exportToWord(optimizedData, `Resume_${optimizedData.name || "Optimized"}`);
     } catch (error) {
       console.error("Word export failed:", error);
-      alert("Word export failed. Please try again.");
+      toast.error("Word export failed", {
+        description: "Please try again.",
+      });
     } finally {
       setIsDownloading(false);
       setDownloadType(null);

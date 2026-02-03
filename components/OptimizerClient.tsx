@@ -6,6 +6,7 @@ import { UserButton, useUser, SignedIn, SignedOut, SignInButton } from "@clerk/n
 import { Logo } from "@/components/Logo";
 import Link from "next/link";
 import { CreditBalance } from "@/components/CreditBalance";
+import { toast } from "sonner";
 import { 
   Upload, 
   FileText, 
@@ -172,11 +173,15 @@ export function OptimizerClient() {
 
   const handleAnalyze = async () => {
     if (!hasResume) {
-      setError("Please upload or paste your resume");
+      toast.error("Missing Resume", {
+        description: "Please upload or paste your resume",
+      });
       return;
     }
     if (!hasJobContext) {
-      setError("Please provide a job title or description");
+      toast.error("Missing Job Context", {
+        description: "Please provide a job title or description",
+      });
       return;
     }
     
@@ -225,17 +230,23 @@ export function OptimizerClient() {
       const creditResult = await creditCheck.json();
 
       if (!creditResult.success) {
-        setError("You need credits to optimize your CV. Get started with our Starter pack for just $3!");
-        // Optionally open pricing modal or redirect
+        toast.error("You need credits to continue", {
+          description: "Get our Starter Pack for just $3!",
+          action: {
+            label: "View Pricing",
+            onClick: () => router.push("/pricing"),
+          },
+        });
         return;
       }
     } catch (creditError) {
       console.error("Credit check failed:", creditError);
-      setError("Failed to check credits. Please try again.");
+      toast.error("Failed to check credits", {
+        description: "Please try again.",
+      });
       return;
     }
 
-    setError("");
     setIsAnalyzing(true);
 
     try {
@@ -281,7 +292,9 @@ export function OptimizerClient() {
       router.push("/results");
 
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Something went wrong");
+      toast.error("Analysis Failed", {
+        description: err instanceof Error ? err.message : "Something went wrong. Please try again.",
+      });
     } finally {
       setIsAnalyzing(false);
     }
@@ -548,13 +561,6 @@ export function OptimizerClient() {
             </div>
           </div>
 
-          {/* Error Message */}
-          {error && (
-            <div className="mt-8 p-5 bg-red-50/80 border border-red-200/60 rounded-sm flex items-center gap-4 text-red-700 max-w-2xl mx-auto">
-              <AlertCircle className="w-5 h-5 flex-shrink-0" strokeWidth={1.5} />
-              <span className="font-light">{error}</span>
-            </div>
-          )}
 
           {/* CTA Button */}
           <div className="mt-14 flex justify-center">
