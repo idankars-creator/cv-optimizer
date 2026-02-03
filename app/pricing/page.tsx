@@ -1,6 +1,7 @@
 import React from 'react';
 import Link from 'next/link';
 import { ArrowLeft, Check, X, Sparkles, Zap, Infinity, Gift } from 'lucide-react';
+import { PayPalButton } from '@/components/PayPalButton';
 
 export default function PricingPage() {
   return (
@@ -23,7 +24,7 @@ export default function PricingPage() {
           </p>
         </div>
 
-        {/* Pricing Cards - 4 Column Layout */}
+        {/* Pricing Cards - 4 Column Layout (Free + 3 Paid Tiers) */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 lg:gap-8">
           
           {/* Tier 1: Free Audit */}
@@ -73,27 +74,28 @@ export default function PricingPage() {
             </button>
           </div>
 
-          {/* Tier 2: Single Shot */}
+          {/* Tier 2: Starter */}
           <div className="bg-white rounded-xl border-2 border-gray-200 shadow-sm hover:shadow-md transition-shadow p-8 flex flex-col">
             <div className="flex-1">
               <div className="flex items-center gap-2 mb-2">
                 <Sparkles className="w-5 h-5 text-indigo-600" />
-                <h3 className="text-xl font-bold text-gray-900">Single Shot</h3>
+                <h3 className="text-xl font-bold text-gray-900">Starter</h3>
               </div>
-              <p className="text-sm text-gray-500 mb-6">Perfect for a specific application</p>
+              <p className="text-sm text-gray-500 mb-6">Perfect for trying out our service</p>
               
               <div className="mb-6">
                 <div className="flex items-baseline gap-2">
                   <span className="text-4xl font-bold text-gray-900">$3</span>
                   <span className="text-sm text-gray-500">One-time</span>
                 </div>
+                <p className="text-xs text-indigo-600 font-medium mt-1">5 Credits</p>
               </div>
 
               {/* Features List */}
               <ul className="space-y-4 mb-8">
                 <li className="flex items-start gap-3">
                   <Check className="w-5 h-5 text-green-600 flex-shrink-0 mt-0.5" />
-                  <span className="text-gray-700">1 AI Optimization</span>
+                  <span className="text-gray-700"><strong>5 Credits</strong> - Download or optimize 5 times</span>
                 </li>
                 <li className="flex items-start gap-3">
                   <Check className="w-5 h-5 text-green-600 flex-shrink-0 mt-0.5" />
@@ -101,26 +103,22 @@ export default function PricingPage() {
                 </li>
                 <li className="flex items-start gap-3">
                   <Check className="w-5 h-5 text-green-600 flex-shrink-0 mt-0.5" />
+                  <span className="text-gray-700">AI Optimization</span>
+                </li>
+                <li className="flex items-start gap-3">
+                  <Check className="w-5 h-5 text-green-600 flex-shrink-0 mt-0.5" />
                   <span className="text-gray-700">ATS Score Check</span>
-                </li>
-                <li className="flex items-start gap-3">
-                  <X className="w-5 h-5 text-gray-300 flex-shrink-0 mt-0.5" />
-                  <span className="text-gray-400 line-through">Bulk Job Tailoring</span>
-                </li>
-                <li className="flex items-start gap-3">
-                  <X className="w-5 h-5 text-gray-300 flex-shrink-0 mt-0.5" />
-                  <span className="text-gray-400 line-through">Cover Letter Generation</span>
                 </li>
               </ul>
             </div>
 
-            {/* CTA Button */}
-            <button className="w-full px-6 py-3 bg-gray-100 hover:bg-gray-200 text-gray-900 font-semibold rounded-lg transition-colors">
-              Optimize One ($3)
-            </button>
+            {/* CTA Button - PayPal */}
+            <div className="mt-auto">
+              <PayPalButton amount={3} planName="Starter" />
+            </div>
           </div>
 
-          {/* Tier 3: Job Hunter - MOST POPULAR (Elevated) */}
+          {/* Tier 3: Pro - MOST POPULAR (Elevated) */}
           <div className="bg-white rounded-xl border-2 border-purple-600 shadow-xl hover:shadow-2xl transition-all p-8 flex flex-col transform scale-105 relative lg:scale-105">
             {/* Most Popular Badge */}
             <div className="absolute -top-4 left-1/2 -translate-x-1/2">
@@ -132,27 +130,31 @@ export default function PricingPage() {
             <div className="flex-1">
               <div className="flex items-center gap-2 mb-2">
                 <Zap className="w-5 h-5 text-purple-600" />
-                <h3 className="text-xl font-bold text-gray-900">Job Hunter</h3>
+                <h3 className="text-xl font-bold text-gray-900">Pro</h3>
               </div>
-              <p className="text-sm text-gray-500 mb-6">For the serious job seeker</p>
+              <p className="text-sm text-gray-500 mb-6">Best value for serious job seekers</p>
               
               <div className="mb-6">
                 <div className="flex items-baseline gap-2">
-                  <span className="text-4xl font-bold text-gray-900">$10</span>
+                  <span className="text-4xl font-bold text-gray-900">$9</span>
                   <span className="text-sm text-gray-500">One-time</span>
                 </div>
-                <p className="text-xs text-purple-600 font-medium mt-1">$1 per resume!</p>
+                <p className="text-xs text-purple-600 font-medium mt-1">20 Credits</p>
               </div>
 
               {/* Features List */}
               <ul className="space-y-4 mb-8">
                 <li className="flex items-start gap-3">
                   <Check className="w-5 h-5 text-green-600 flex-shrink-0 mt-0.5" />
-                  <span className="text-gray-700"><strong>10</strong> AI Optimizations</span>
+                  <span className="text-gray-700"><strong>20 Credits</strong> - Download or optimize 20 times</span>
                 </li>
                 <li className="flex items-start gap-3">
                   <Check className="w-5 h-5 text-green-600 flex-shrink-0 mt-0.5" />
                   <span className="text-gray-700">PDF & Docx Download</span>
+                </li>
+                <li className="flex items-start gap-3">
+                  <Check className="w-5 h-5 text-green-600 flex-shrink-0 mt-0.5" />
+                  <span className="text-gray-700">AI Optimization</span>
                 </li>
                 <li className="flex items-start gap-3">
                   <Check className="w-5 h-5 text-green-600 flex-shrink-0 mt-0.5" />
@@ -162,44 +164,52 @@ export default function PricingPage() {
                   <Check className="w-5 h-5 text-green-600 flex-shrink-0 mt-0.5" />
                   <span className="text-gray-700">Bulk Job Tailoring</span>
                 </li>
-                <li className="flex items-start gap-3">
-                  <Check className="w-5 h-5 text-green-600 flex-shrink-0 mt-0.5" />
-                  <span className="text-gray-700">Cover Letter Generation</span>
-                </li>
               </ul>
             </div>
 
-            {/* CTA Button - Primary */}
-            <button className="w-full px-6 py-3 bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700 text-white font-semibold rounded-lg transition-all shadow-lg hover:shadow-xl">
-              Get Bundle ($10)
-            </button>
+            {/* CTA Button - PayPal */}
+            <div className="mt-auto">
+              <PayPalButton amount={9} planName="Pro" />
+            </div>
           </div>
 
-          {/* Tier 3: Unlimited Pro */}
-          <div className="bg-white rounded-xl border-2 border-gray-200 shadow-sm hover:shadow-md transition-shadow p-8 flex flex-col">
+          {/* Tier 4: Ultimate - BEST VALUE (Elevated) */}
+          <div className="bg-white rounded-xl border-2 border-amber-500 shadow-xl hover:shadow-2xl transition-all p-8 flex flex-col transform scale-105 relative lg:scale-105">
+            {/* Best Value Badge */}
+            <div className="absolute -top-4 left-1/2 -translate-x-1/2">
+              <span className="bg-gradient-to-r from-amber-500 to-orange-500 text-white text-xs font-bold px-4 py-1.5 rounded-full shadow-lg">
+                BEST VALUE
+              </span>
+            </div>
+
             <div className="flex-1">
               <div className="flex items-center gap-2 mb-2">
-                <Infinity className="w-5 h-5 text-indigo-600" />
-                <h3 className="text-xl font-bold text-gray-900">Unlimited Pro</h3>
+                <Zap className="w-5 h-5 text-amber-600" />
+                <h3 className="text-xl font-bold text-gray-900">Ultimate</h3>
               </div>
-              <p className="text-sm text-gray-500 mb-6">Apply without limits</p>
+              <p className="text-sm text-gray-500 mb-6">Maximum credits for power users</p>
               
               <div className="mb-6">
                 <div className="flex items-baseline gap-2">
                   <span className="text-4xl font-bold text-gray-900">$20</span>
-                  <span className="text-sm text-gray-500">For 2 Weeks</span>
+                  <span className="text-sm text-gray-500">One-time</span>
                 </div>
+                <p className="text-xs text-amber-600 font-medium mt-1">60 Credits</p>
               </div>
 
               {/* Features List */}
               <ul className="space-y-4 mb-8">
                 <li className="flex items-start gap-3">
                   <Check className="w-5 h-5 text-green-600 flex-shrink-0 mt-0.5" />
-                  <span className="text-gray-700"><strong>Unlimited</strong> AI Optimizations</span>
+                  <span className="text-gray-700"><strong>60 Credits</strong> - Download or optimize 60 times</span>
                 </li>
                 <li className="flex items-start gap-3">
                   <Check className="w-5 h-5 text-green-600 flex-shrink-0 mt-0.5" />
                   <span className="text-gray-700">PDF & Docx Download</span>
+                </li>
+                <li className="flex items-start gap-3">
+                  <Check className="w-5 h-5 text-green-600 flex-shrink-0 mt-0.5" />
+                  <span className="text-gray-700">AI Optimization</span>
                 </li>
                 <li className="flex items-start gap-3">
                   <Check className="w-5 h-5 text-green-600 flex-shrink-0 mt-0.5" />
@@ -211,15 +221,15 @@ export default function PricingPage() {
                 </li>
                 <li className="flex items-start gap-3">
                   <Check className="w-5 h-5 text-green-600 flex-shrink-0 mt-0.5" />
-                  <span className="text-gray-700">Cover Letter Generation</span>
+                  <span className="text-gray-700">Priority Support</span>
                 </li>
               </ul>
             </div>
 
-            {/* CTA Button */}
-            <button className="w-full px-6 py-3 bg-indigo-600 hover:bg-indigo-700 text-white font-semibold rounded-lg transition-colors shadow-sm hover:shadow-md">
-              Go Unlimited ($20)
-            </button>
+            {/* CTA Button - PayPal */}
+            <div className="mt-auto">
+              <PayPalButton amount={20} planName="Ultimate" />
+            </div>
           </div>
 
         </div>

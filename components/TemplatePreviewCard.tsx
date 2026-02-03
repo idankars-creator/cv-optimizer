@@ -9,6 +9,7 @@ import {
   TEMPLATE_INFO,
   TEMPLATE_COMPONENTS,
 } from "./cv-templates";
+import { Watermark } from "@/components/Watermark";
 
 interface TemplatePreviewCardProps {
   templateId: TemplateType;
@@ -69,13 +70,33 @@ export function TemplatePreviewCard({
     `,
   });
 
-  const handleDownloadClick = () => {
-    // Authentication temporarily disabled - all features are now public
-    // if (!isSignedIn) {
-    //   setShowSignInPrompt(true);
-    //   return;
-    // }
-    handlePrint();
+  const handleDownloadClick = async () => {
+    if (!isSignedIn) {
+      setShowSignInPrompt(true);
+      return;
+    }
+    
+    try {
+      // First, use a credit
+      const creditResponse = await fetch("/api/use-credit", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+      });
+
+      const creditResult = await creditResponse.json();
+
+      if (!creditResult.success) {
+        // Show no credits modal (we'll add this)
+        alert("You need credits to download. Get started with our Starter pack for just $3!");
+        return;
+      }
+
+      // Proceed with download
+      handlePrint();
+    } catch (error) {
+      console.error("Credit check failed:", error);
+      alert("Failed to check credits. Please try again.");
+    }
   };
 
   const closePreview = () => setShowFullPreview(false);
@@ -182,8 +203,9 @@ export function TemplatePreviewCard({
             </div>
 
             {/* Preview Content */}
-            <div className="flex-1 overflow-auto p-6 bg-slate-100 flex justify-center">
-              <div className="shadow-2xl">
+            <div className="flex-1 overflow-auto p-6 bg-slate-100 flex justify-center relative">
+              <Watermark />
+              <div className="shadow-2xl relative z-10">
                 <Component data={cvData} photo={templateId === "creative" ? photo : undefined} />
               </div>
             </div>

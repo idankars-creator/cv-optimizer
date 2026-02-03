@@ -177,36 +177,55 @@ export function OptimizerClient() {
       return;
     }
     
-    // Authentication temporarily disabled - all features are now public
-    // if (!isSignedIn) {
-    //   // Save draft including file as base64
-    //   const saveDraft = async () => {
-    //     const draft: Record<string, string | null> = {
-    //       cvText,
-    //       cvFileName: cvFile?.name || null,
-    //       cvFileMimeType: cvFile?.type || null,
-    //       jobTitle,
-    //       jobDescription,
-    //       jobUrl,
-    //       summary,
-    //     };
-    //     
-    //     // Convert file to base64 if present
-    //     if (cvFile) {
-    //       try {
-    //         draft.cvFileBase64 = await fileToBase64(cvFile);
-    //       } catch (err) {
-    //         console.error("Failed to convert file to base64:", err);
-    //       }
-    //     }
-    //     
-    //     localStorage.setItem(DRAFT_KEY, JSON.stringify(draft));
-    //     openAuthModal("analyze");
-    //   };
-    //   
-    //   saveDraft();
-    //   return;
-    // }
+    if (!isSignedIn) {
+      // Save draft including file as base64
+      const saveDraft = async () => {
+        const draft: Record<string, string | null> = {
+          cvText,
+          cvFileName: cvFile?.name || null,
+          cvFileMimeType: cvFile?.type || null,
+          jobTitle,
+          jobDescription,
+          jobUrl,
+          summary,
+        };
+        
+        // Convert file to base64 if present
+        if (cvFile) {
+          try {
+            draft.cvFileBase64 = await fileToBase64(cvFile);
+          } catch (err) {
+            console.error("Failed to convert file to base64:", err);
+          }
+        }
+        
+        localStorage.setItem(DRAFT_KEY, JSON.stringify(draft));
+        openAuthModal("analyze");
+      };
+      
+      saveDraft();
+      return;
+    }
+
+    // Check credits before analyzing
+    try {
+      const creditCheck = await fetch("/api/use-credit", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+      });
+
+      const creditResult = await creditCheck.json();
+
+      if (!creditResult.success) {
+        setError("You need credits to optimize your CV. Get started with our Starter pack for just $3!");
+        // Optionally open pricing modal or redirect
+        return;
+      }
+    } catch (creditError) {
+      console.error("Credit check failed:", creditError);
+      setError("Failed to check credits. Please try again.");
+      return;
+    }
 
     setError("");
     setIsAnalyzing(true);
