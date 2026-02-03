@@ -3,12 +3,35 @@
 import { useAuth } from "@clerk/nextjs";
 import Link from "next/link";
 import { Zap } from "lucide-react";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 
 export function CreditBalance() {
   const { userId, isLoaded } = useAuth();
   const [credits, setCredits] = useState<number | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+
+  // Fetch credits function
+  const fetchCredits = useCallback(async () => {
+    if (!userId) {
+      setCredits(null);
+      setIsLoading(false);
+      return;
+    }
+
+    try {
+      setIsLoading(true);
+      const response = await fetch("/api/get-credits", {
+        cache: "no-store", // Ensure fresh data
+      });
+      const data = await response.json();
+      setCredits(data.credits ?? 0);
+    } catch (error) {
+      console.error("Failed to fetch credit balance:", error);
+      setCredits(0);
+    } finally {
+      setIsLoading(false);
+    }
+  }, [userId]);
 
   useEffect(() => {
     if (!isLoaded) {
@@ -16,29 +39,17 @@ export function CreditBalance() {
       return;
     }
 
-    if (!userId) {
-      setCredits(null);
-      setIsLoading(false);
-      return;
-    }
-
-    // Fetch credits from API
-    const fetchCredits = async () => {
-      try {
-        setIsLoading(true);
-        const response = await fetch("/api/get-credits");
-        const data = await response.json();
-        setCredits(data.credits ?? 0);
-      } catch (error) {
-        console.error("Failed to fetch credit balance:", error);
-        setCredits(0);
-      } finally {
-        setIsLoading(false);
-      }
-    };
-
     fetchCredits();
-  }, [userId, isLoaded]);
+
+    // Auto-refresh every 5 seconds to catch manual DB updates
+    const interval = setInterval(() => {
+      if (userId) {
+        fetchCredits();
+      }
+    }, 5000);
+
+    return () => clearInterval(interval);
+  }, [userId, isLoaded, fetchCredits]);
 
   // If user is not logged in or still loading, render nothing
   if (!isLoaded || isLoading || !userId || credits === null) {
