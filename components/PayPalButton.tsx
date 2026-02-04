@@ -21,13 +21,16 @@ export function PayPalButton({ amount, planName }: PayPalButtonProps) {
 
   const handleApprove = async (data: any, actions: any) => {
     try {
-      console.log("Processing payment...");
+      console.log("🟢 PayPal: Starting payment approval...");
+      console.log("🟢 PayPal Order ID:", data.orderID);
       
       // 1. Capture payment
       const details = await actions.order?.capture();
-      console.log("PayPal Capture Success:", details);
+      console.log("✅ PayPal Capture Success:", details);
 
       // 2. Add Credits via API
+      console.log(`🔵 Calling /api/confirm-purchase with amount=${amount}, plan=${planName}`);
+      
       const response = await fetch('/api/confirm-purchase', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -38,25 +41,36 @@ export function PayPalButton({ amount, planName }: PayPalButtonProps) {
         }),
       });
 
+      console.log("📊 API Response status:", response.status);
+
       if (!response.ok) {
-        const errData = await response.json();
+        const errData = await response.json().catch(() => ({ error: "Unknown error" }));
+        console.error("🔴 API Error Response:", errData);
         throw new Error(errData.error || "Failed to update credits");
       }
 
       const result = await response.json();
+      console.log("✅ API Success Response:", result);
       
       // 3. Success UI
-      toast.success(`Purchase successful! +${result.added} credits added.`);
+      toast.success(`Payment successful! +${result.added} credits added.`, {
+        description: `New balance: ${result.newBalance} credits`,
+        duration: 5000,
+      });
       
       // Force reload to update UI state immediately
       setTimeout(() => {
+        console.log("🔄 Reloading page to refresh credit balance...");
         window.location.reload();
       }, 1500);
 
     } catch (err: any) {
-      console.error("Payment Flow Error:", err);
+      console.error("🔥 Payment Flow Error:", err);
+      console.error("🔥 Error stack:", err.stack);
+      
       toast.error("Payment completed, but credit update failed.", {
-        description: "Please contact support if credits do not appear."
+        description: "Please contact support if credits do not appear within 5 minutes.",
+        duration: 10000,
       });
     }
   };
@@ -78,6 +92,7 @@ export function PayPalButton({ amount, planName }: PayPalButtonProps) {
             label: "paypal",
           }}
           createOrder={(data, actions) => {
+            console.log("🟡 Creating PayPal order...");
             return actions.order.create({
               intent: "CAPTURE",
               application_context: {
@@ -98,13 +113,13 @@ export function PayPalButton({ amount, planName }: PayPalButtonProps) {
           }}
           onApprove={handleApprove}
           onError={(err) => {
-            console.error("PayPal error:", err);
+            console.error("🔴 PayPal SDK Error:", err);
             toast.error("Payment Error", {
               description: "An error occurred. Please try again.",
             });
           }}
           onCancel={(data) => {
-            console.log("Payment cancelled:", data);
+            console.log("⚠️ Payment cancelled by user:", data);
             toast.info("Payment cancelled.");
           }}
         />
