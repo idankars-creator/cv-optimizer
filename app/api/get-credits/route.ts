@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { auth } from "@clerk/nextjs/server";
 import { prisma } from "@/lib/prisma";
 
-export const dynamic = 'force-dynamic';
+export const dynamic = 'force-dynamic'; // Prevent caching
 
 export async function GET() {
   try {
@@ -19,7 +19,8 @@ export async function GET() {
 
     return NextResponse.json({ credits: user?.credits ?? 0 });
   } catch (error) {
-    console.error("Error fetching credits:", error);
-    return NextResponse.json({ error: "Internal Server Error" }, { status: 500 });
+    console.error("CRITICAL API ERROR (get-credits):", error);
+    // Return 0 instead of crashing the UI
+    return NextResponse.json({ credits: 0, error: "Server Error" }, { status: 200 });
   }
 }
