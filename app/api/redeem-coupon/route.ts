@@ -48,6 +48,23 @@ export async function POST(request: Request) {
       );
     }
 
+    // Check if user has already redeemed this coupon
+    const existingRedemption = await prisma.couponRedemption.findUnique({
+      where: {
+        userId_couponId: {
+          userId: userId,
+          couponId: coupon.id,
+        },
+      },
+    });
+
+    if (existingRedemption) {
+      return NextResponse.json(
+        { error: "You have already redeemed this coupon" },
+        { status: 400 }
+      );
+    }
+
     // Get user info from Clerk for email
     const user = await currentUser();
     const userEmail = user?.emailAddresses[0]?.emailAddress || "no-email";
@@ -72,6 +89,14 @@ export async function POST(request: Request) {
           credits: {
             increment: coupon.credits,
           },
+        },
+      });
+
+      // Record the redemption
+      await tx.couponRedemption.create({
+        data: {
+          userId: userId,
+          couponId: coupon.id,
         },
       });
 
