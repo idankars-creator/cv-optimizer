@@ -11,43 +11,51 @@ const PLAN_CREDITS: Record<string, number> = {
   "Ultimate": 60,
 };
 
-export async function POST(request: Request) {
+export async function POST(req: Request) {
   try {
-    // Validate user is logged in
-    const { userId } = await auth();
+    console.log("🔵 API: confirm-purchase called");
     
+    // 1. Check Auth
+    const { userId } = await auth();
     if (!userId) {
-      return NextResponse.json(
-        { error: "Unauthorized" },
-        { status: 401 }
-      );
+      console.error("🔴 API Error: User not logged in");
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const body = await request.json();
+    console.log("🔵 API: User authenticated:", userId);
+
+    // 2. Parse Body
+    const body = await req.json();
+    console.log("🔵 API Payload:", JSON.stringify(body, null, 2));
+    
     const { planName, amount, orderId } = body;
 
     if (!planName || !amount) {
+      console.error("🔴 API Error: Missing planName or amount");
       return NextResponse.json(
         { error: "Plan name and amount are required" },
         { status: 400 }
       );
     }
 
-    // Determine how many credits to add based on plan
+    // 3. Determine Credits based on plan name
     const creditsToAdd = PLAN_CREDITS[planName];
     
     if (creditsToAdd === undefined) {
+      console.error("🔴 API Error: Invalid plan name:", planName);
       return NextResponse.json(
         { error: "Invalid plan name" },
         { status: 400 }
       );
     }
 
-    // Get user email from Clerk
+    console.log(`🔵 Adding ${creditsToAdd} credits to user ${userId} for plan: ${planName}`);
+
+    // 4. Get user email for upsert
     const user = await currentUser();
     const userEmail = user?.emailAddresses[0]?.emailAddress || "no-email";
 
-    // Use transaction to ensure data consistency
+    // 5. Use transaction to ensure data consistency
     const result = await prisma.$transaction(async (tx) => {
       // Ensure user exists in database
       const dbUser = await tx.user.upsert({
@@ -60,8 +68,10 @@ export async function POST(request: Request) {
         },
       });
 
+      console.log("🔵 User found/created with current credits:", dbUser.credits);
+
       // Create purchase record
-      await tx.purchase.create({
+      const purchase = await tx.purchase.create({
         data: {
           userId: userId,
           amount: parseFloat(amount.toString()),
@@ -71,7 +81,9 @@ export async function POST(request: Request) {
         },
       });
 
-      // Increment user credits
+      console.log("🔵 Purchase record created:", purchase.id);
+
+      // Update user credits
       const updatedUser = await tx.user.update({
         where: { id: userId },
         data: {
@@ -81,24 +93,39 @@ export async function POST(request: Request) {
         },
       });
 
+      console.log("🔵 Credits updated. New balance:", updatedUser.credits);
+
       return {
+        purchase,
+        user: updatedUser,
         creditsAdded: creditsToAdd,
-        newBalance: updatedUser.credits,
       };
     });
 
-    console.log(`✅ Purchase confirmed: Added ${result.creditsAdded} credits to user ${userId}. New balance: ${result.newBalance}`);
+    console.log("✅ API Success: Credits updated", {
+      userId,
+      creditsAdded: result.creditsAdded,
+      newBalance: result.user.credits,
+      purchaseId: result.purchase.id,
+    });
 
     return NextResponse.json({
       success: true,
       creditsAdded: result.creditsAdded,
-      newBalance: result.newBalance,
-      message: `Successfully added ${result.creditsAdded} credits to your account`,
+      newBalance: result.user.credits,
+      message: `Successfully added ${result.creditsAdded} credits`,
     });
+
   } catch (error) {
-    console.error("Confirm purchase error:", error);
+    console.error("🔥 API Critical Error:", error);
+    console.error("🔥 Error details:", error instanceof Error ? error.message : String(error));
+    console.error("🔥 Error stack:", error instanceof Error ? error.stack : "No stack trace");
+    
     return NextResponse.json(
-      { error: "Failed to confirm purchase and add credits" },
+      { 
+        error: "Internal Server Error",
+        message: error instanceof Error ? error.message : "Unknown error"
+      },
       { status: 500 }
     );
   }
