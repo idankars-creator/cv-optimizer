@@ -12,10 +12,19 @@ export async function GET() {
       return NextResponse.json({ credits: 0 });
     }
 
+    // Add logging to track which database we're querying
+    const dbUrlPreview = process.env.DATABASE_URL 
+      ? `${process.env.DATABASE_URL.substring(0, 40)}...` 
+      : "NOT SET";
+    console.log(`🔍 [get-credits] Querying DB for userId: ${userId}`);
+    console.log(`🔍 [get-credits] DB URL preview: ${dbUrlPreview}`);
+
     const user = await prisma.user.findUnique({
       where: { id: userId },
       select: { credits: true },
     });
+
+    console.log(`🔍 [get-credits] User found: ${!!user}, Credits: ${user?.credits ?? 0}`);
 
     return NextResponse.json({ credits: user?.credits ?? 0 });
   } catch (error) {

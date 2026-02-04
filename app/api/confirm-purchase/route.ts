@@ -7,6 +7,13 @@ export const dynamic = 'force-dynamic';
 export async function POST(req: Request) {
   console.log("🔵 API: /api/confirm-purchase started");
   
+  // Log environment and database info
+  const dbUrlPreview = process.env.DATABASE_URL 
+    ? `${process.env.DATABASE_URL.substring(0, 40)}...` 
+    : "NOT SET";
+  console.log(`🌍 Environment: ${process.env.NODE_ENV}`);
+  console.log(`🔍 DB URL preview: ${dbUrlPreview}`);
+  
   try {
     // 1. Auth Check
     const { userId } = await auth();

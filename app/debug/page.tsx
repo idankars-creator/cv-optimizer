@@ -10,6 +10,8 @@ export default function DebugPage() {
   const { user } = useUser();
   const [result, setResult] = useState<any>(null);
   const [loading, setLoading] = useState(false);
+  const [dbInfo, setDbInfo] = useState<any>(null);
+  const [loadingDbInfo, setLoadingDbInfo] = useState(false);
 
   const testDatabaseConnection = async () => {
     setLoading(true);
@@ -39,6 +41,28 @@ export default function DebugPage() {
       });
     } finally {
       setLoading(false);
+    }
+  };
+
+  const checkDatabaseInfo = async () => {
+    setLoadingDbInfo(true);
+    setDbInfo(null);
+
+    try {
+      console.log("🔍 Checking database info...");
+      const response = await fetch('/api/debug-db-info', {
+        method: 'GET',
+        cache: 'no-store'
+      });
+
+      const data = await response.json();
+      console.log("🔍 DB Info Response:", data);
+      setDbInfo(data);
+    } catch (error: any) {
+      console.error("🔍 Fetch error:", error);
+      setDbInfo({ error: error.message });
+    } finally {
+      setLoadingDbInfo(false);
     }
   };
 
@@ -102,6 +126,47 @@ export default function DebugPage() {
               </>
             )}
           </div>
+        </div>
+
+        {/* Database Info */}
+        <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6 mb-6">
+          <h2 className="text-xl font-semibold text-gray-900 mb-4">Database Information</h2>
+          <p className="text-black mb-4">
+            Check which database is being used and verify your user data exists.
+          </p>
+          
+          <button
+            onClick={checkDatabaseInfo}
+            disabled={!userId || loadingDbInfo}
+            className={`
+              w-full sm:w-auto px-6 py-3 rounded-lg font-semibold text-white
+              flex items-center justify-center gap-2 transition-all mb-4
+              ${!userId || loadingDbInfo 
+                ? 'bg-gray-400 cursor-not-allowed' 
+                : 'bg-purple-600 hover:bg-purple-700 active:scale-95'
+              }
+            `}
+          >
+            {loadingDbInfo ? (
+              <>
+                <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                Loading...
+              </>
+            ) : (
+              <>
+                <Database className="w-5 h-5" />
+                Check Database Info
+              </>
+            )}
+          </button>
+
+          {dbInfo && (
+            <div className="bg-gray-50 rounded-lg p-4 overflow-auto">
+              <pre className="text-sm font-mono text-black whitespace-pre-wrap">
+                {JSON.stringify(dbInfo, null, 2)}
+              </pre>
+            </div>
+          )}
         </div>
 
         {/* Test Button */}
