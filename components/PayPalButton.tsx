@@ -23,10 +23,11 @@ export function PayPalButton({ amount, planName }: PayPalButtonProps) {
 
   const handleApprove = async (data: any, actions: any) => {
     try {
+      // Wait for PayPal order capture to complete
       const order = await actions.order?.capture();
       console.log("PayPal Order Details:", order);
 
-      // First, call PayPal capture API to log the payment (non-blocking)
+      // Log payment to PayPal capture API (non-blocking)
       fetch("/api/paypal/capture", {
         method: "POST",
         headers: {
@@ -40,31 +41,33 @@ export function PayPalButton({ amount, planName }: PayPalButtonProps) {
         }),
       }).catch(err => console.error("Failed to log payment:", err));
 
-      // Then, call add-credits API to update database (this is critical)
-      const creditsResponse = await fetch("/api/add-credits", {
+      // Call confirm-purchase API to add credits to user account
+      const purchaseResponse = await fetch("/api/confirm-purchase", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
-          plan: planName,
+          planName: planName,
           amount: amount,
           orderId: order.id,
         }),
       });
 
-      if (!creditsResponse.ok) {
-        const errorData = await creditsResponse.json();
+      if (!purchaseResponse.ok) {
+        const errorData = await purchaseResponse.json();
         throw new Error(errorData.error || "Failed to add credits");
       }
 
-      const creditsResult = await creditsResponse.json();
+      const purchaseResult = await purchaseResponse.json();
 
-      if (creditsResult.success) {
+      if (purchaseResult.success) {
+        // Refresh the page to update credit balance in UI
+        router.refresh();
+        
         toast.success("Payment Successful!", {
-          description: `Credits have been added to your account. You now have ${creditsResult.totalCredits} credits.`,
+          description: `Credits added! You now have ${purchaseResult.newBalance} credits.`,
         });
-        router.push("/dashboard");
       } else {
         toast.error("Payment Error", {
           description: "Payment processed but there was an error adding credits. Please contact support.",
