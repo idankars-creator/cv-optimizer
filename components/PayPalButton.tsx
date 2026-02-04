@@ -1,7 +1,6 @@
 "use client";
 
 import { PayPalScriptProvider, PayPalButtons } from "@paypal/react-paypal-js";
-import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 
 interface PayPalButtonProps {
@@ -10,7 +9,6 @@ interface PayPalButtonProps {
 }
 
 export function PayPalButton({ amount, planName }: PayPalButtonProps) {
-  const router = useRouter();
   const clientId = process.env.NEXT_PUBLIC_PAYPAL_CLIENT_ID;
 
   if (!clientId) {
@@ -45,8 +43,10 @@ export function PayPalButton({ amount, planName }: PayPalButtonProps) {
         throw new Error(errData.error || "Failed to update credits");
       }
 
+      const result = await response.json();
+      
       // 3. Success UI
-      toast.success("Purchase successful! Credits added.");
+      toast.success(`Purchase successful! +${result.added} credits added.`);
       
       // Force reload to update UI state immediately
       setTimeout(() => {
@@ -105,9 +105,12 @@ export function PayPalButton({ amount, planName }: PayPalButtonProps) {
           }}
           onCancel={(data) => {
             console.log("Payment cancelled:", data);
+            toast.info("Payment cancelled.");
           }}
         />
       </PayPalScriptProvider>
     </div>
   );
 }
+
+export default PayPalButton;
