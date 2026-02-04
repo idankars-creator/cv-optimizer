@@ -68,7 +68,7 @@ export default function DebugPage() {
             <Database className="w-8 h-8 text-blue-600" />
             Database Connection Debug Tool
           </h1>
-          <p className="text-gray-600">
+          <p className="text-black">
             This page tests database connectivity and credit operations directly, bypassing PayPal.
           </p>
         </div>
@@ -107,10 +107,10 @@ export default function DebugPage() {
         {/* Test Button */}
         <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6 mb-6">
           <h2 className="text-xl font-semibold text-gray-900 mb-4">Test Database Operation</h2>
-          <p className="text-gray-600 mb-4">
+          <p className="text-black mb-4">
             Click the button below to test adding 5 credits to your account. This will:
           </p>
-          <ul className="list-disc list-inside text-gray-600 space-y-1 mb-6">
+          <ul className="list-disc list-inside text-black space-y-1 mb-6">
             <li>Verify authentication</li>
             <li>Check if your user exists in the database</li>
             <li>Attempt to increment your credits by 5</li>
@@ -167,7 +167,7 @@ export default function DebugPage() {
 
             {/* Response Data */}
             <div className="bg-gray-50 rounded-lg p-4 overflow-auto">
-              <pre className="text-sm font-mono whitespace-pre-wrap">
+              <pre className="text-sm font-mono text-black whitespace-pre-wrap">
                 {JSON.stringify(result.data, null, 2)}
               </pre>
             </div>
@@ -175,10 +175,10 @@ export default function DebugPage() {
             {/* Success Message */}
             {result.status === 200 && result.data.success && (
               <div className="mt-4 p-4 bg-green-50 border border-green-200 rounded-lg">
-                <p className="text-green-800 font-medium">
+                <p className="text-black font-medium">
                   ✅ Database operation successful!
                 </p>
-                <p className="text-green-700 text-sm mt-1">
+                <p className="text-black text-sm mt-1">
                   Credits updated: {result.data.oldBalance} → {result.data.newBalance} (+{result.data.added})
                 </p>
               </div>
@@ -187,14 +187,14 @@ export default function DebugPage() {
             {/* Error Message */}
             {result.status !== 200 && (
               <div className="mt-4 p-4 bg-red-50 border border-red-200 rounded-lg">
-                <p className="text-red-800 font-medium">
+                <p className="text-black font-medium">
                   ❌ Database operation failed
                 </p>
-                <p className="text-red-700 text-sm mt-1">
+                <p className="text-black text-sm mt-1">
                   {result.data.error || "Unknown error"}
                 </p>
                 {result.data.suggestion && (
-                  <p className="text-red-600 text-sm mt-2">
+                  <p className="text-black text-sm mt-2">
                     💡 Suggestion: {result.data.suggestion}
                   </p>
                 )}
@@ -205,7 +205,7 @@ export default function DebugPage() {
 
         {/* Console Reminder */}
         <div className="mt-6 p-4 bg-blue-50 border border-blue-200 rounded-lg">
-          <p className="text-blue-800 text-sm">
+          <p className="text-black text-sm">
             💡 <strong>Tip:</strong> Open your browser's Developer Console (F12) to see detailed logs during the test.
           </p>
         </div>
