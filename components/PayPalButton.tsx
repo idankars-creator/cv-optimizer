@@ -23,60 +23,40 @@ export function PayPalButton({ amount, planName }: PayPalButtonProps) {
 
   const handleApprove = async (data: any, actions: any) => {
     try {
-      // Wait for PayPal order capture to complete
-      const order = await actions.order?.capture();
-      console.log("PayPal Order Details:", order);
+      console.log("Processing payment...");
+      
+      // 1. Capture payment
+      const details = await actions.order?.capture();
+      console.log("PayPal Capture Success:", details);
 
-      // Log payment to PayPal capture API (non-blocking)
-      fetch("/api/paypal/capture", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
+      // 2. Add Credits via API
+      const response = await fetch('/api/confirm-purchase', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          orderId: order.id,
-          planName,
-          amount,
-          orderDetails: order,
-        }),
-      }).catch(err => console.error("Failed to log payment:", err));
-
-      // Call confirm-purchase API to add credits to user account
-      const purchaseResponse = await fetch("/api/confirm-purchase", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          planName: planName,
-          amount: amount,
-          orderId: order.id,
+          planName: planName || "Credit Pack", 
+          amount: amount, 
+          orderId: data.orderID
         }),
       });
 
-      if (!purchaseResponse.ok) {
-        const errorData = await purchaseResponse.json();
-        throw new Error(errorData.error || "Failed to add credits");
+      if (!response.ok) {
+        const errData = await response.json();
+        throw new Error(errData.error || "Failed to update credits");
       }
 
-      const purchaseResult = await purchaseResponse.json();
+      // 3. Success UI
+      toast.success("Purchase successful! Credits added.");
+      
+      // Force reload to update UI state immediately
+      setTimeout(() => {
+        window.location.reload();
+      }, 1500);
 
-      if (purchaseResult.success) {
-        // Refresh the page to update credit balance in UI
-        router.refresh();
-        
-        toast.success("Payment Successful!", {
-          description: `Credits added! You now have ${purchaseResult.newBalance} credits.`,
-        });
-      } else {
-        toast.error("Payment Error", {
-          description: "Payment processed but there was an error adding credits. Please contact support.",
-        });
-      }
-    } catch (error) {
-      console.error("PayPal approval error:", error);
-      toast.error("Payment Failed", {
-        description: error instanceof Error ? error.message : "Please try again.",
+    } catch (err: any) {
+      console.error("Payment Flow Error:", err);
+      toast.error("Payment completed, but credit update failed.", {
+        description: "Please contact support if credits do not appear."
       });
     }
   };
