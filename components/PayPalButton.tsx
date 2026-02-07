@@ -13,7 +13,7 @@ export function PayPalButton({ amount, planName }: PayPalButtonProps) {
 
   if (!clientId) {
     return (
-      <div className="w-full px-6 py-3 bg-gray-100 text-gray-500 font-semibold rounded-lg text-center">
+      <div className="w-full px-6 py-3 bg-stone-100 text-stone-500 font-medium rounded-sm text-center tracking-wide">
         PayPal not configured
       </div>
     );

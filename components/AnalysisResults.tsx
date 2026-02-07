@@ -791,13 +791,13 @@ export function AnalysisResults({ results, coverLetterTab, onEnhanceWithDeepDive
 
                 {/* Continue to Cover Letter Button */}
                 {coverLetterTab && (
-                  <div className="flex justify-end pt-4 border-t border-slate-100 mt-4">
+                  <div className="flex justify-end pt-4 border-t border-stone-100 mt-4">
                     <button
                       onClick={() => setActiveTab("cover-letter")}
-                      className="inline-flex items-center gap-2 px-6 py-3 bg-indigo-600 hover:bg-indigo-700 text-white font-semibold rounded-xl transition-all shadow-lg"
+                      className="inline-flex items-center gap-2 px-6 py-3 bg-[#0A2647] hover:bg-[#0d3259] text-white font-medium rounded-sm transition-all shadow-sm hover:shadow-md tracking-wide"
                     >
                       Generate Cover Letter
-                      <ChevronRight className="w-5 h-5" />
+                      <ChevronRight className="w-5 h-5" strokeWidth={1.5} />
                     </button>
                   </div>
                 )}
@@ -1070,33 +1070,33 @@ export function AnalysisResults({ results, coverLetterTab, onEnhanceWithDeepDive
 
         {activeTab === "cover-letter" && coverLetterTab && (
           <div className="flex-1 min-h-0 flex flex-col">
-            <div className="flex items-center gap-3 mb-4">
-              <div className="w-10 h-10 bg-indigo-100 rounded-xl flex items-center justify-center">
-                <FileText className="w-5 h-5 text-indigo-600" />
+            <div className="flex items-center gap-3 mb-6">
+              <div className="w-10 h-10 bg-[#0A2647]/5 rounded-full flex items-center justify-center">
+                <FileText className="w-5 h-5 text-[#0A2647]" strokeWidth={1.5} />
               </div>
               <div>
-                <h4 className="text-slate-900 font-semibold">
+                <h4 className="font-serif text-lg text-[#1a1a1a]">
                   {coverLetterTab.title || "AI Cover Letter Generator"}
                 </h4>
-                <p className="text-slate-500 text-sm">Generate a tailored cover letter for this position</p>
+                <p className="text-stone-500 text-sm font-light">{coverLetterTab.subtitle || "Generate a tailored cover letter for this position"}</p>
               </div>
             </div>
 
             {/* Error Message */}
             {coverLetterTab.error && (
-              <div className="mb-4 p-4 bg-red-50 border border-red-200 rounded-xl">
+              <div className="mb-4 p-4 bg-red-50/80 border border-red-200/60 rounded-sm">
                 <div className="flex items-start gap-3">
-                  <XCircle className="w-5 h-5 text-red-500 flex-shrink-0 mt-0.5" />
+                  <XCircle className="w-5 h-5 text-red-500 flex-shrink-0 mt-0.5" strokeWidth={1.5} />
                   <div className="flex-1">
-                    <h4 className="font-semibold text-red-800 mb-1">Unable to Generate Cover Letter</h4>
-                    <p className="text-sm text-red-700">{coverLetterTab.error}</p>
+                    <h4 className="font-medium text-red-800 mb-1">Unable to Generate Cover Letter</h4>
+                    <p className="text-sm text-red-700 font-light">{coverLetterTab.error}</p>
                   </div>
                   {coverLetterTab.onDismissError && (
                     <button
                       onClick={coverLetterTab.onDismissError}
-                      className="p-1 hover:bg-red-100 rounded-lg transition-colors"
+                      className="p-1 hover:bg-red-100 rounded-sm transition-colors"
                     >
-                      <X className="w-4 h-4 text-red-500" />
+                      <X className="w-4 h-4 text-red-500" strokeWidth={1.5} />
                     </button>
                   )}
                 </div>
@@ -1107,7 +1107,7 @@ export function AnalysisResults({ results, coverLetterTab, onEnhanceWithDeepDive
             <button
               onClick={coverLetterTab.onGenerate}
               disabled={coverLetterTab.isGenerating || !!coverLetterTab.text}
-              className="w-full px-6 py-4 bg-indigo-600 hover:bg-indigo-700 disabled:bg-slate-200 disabled:text-slate-400 text-white text-base font-semibold rounded-xl transition-all shadow-lg shadow-indigo-600/20 disabled:shadow-none flex items-center justify-center gap-2"
+              className="w-full px-6 py-4 bg-[#0A2647] hover:bg-[#0d3259] disabled:bg-stone-200 disabled:text-stone-400 text-white text-base font-medium rounded-sm transition-all shadow-sm hover:shadow-md disabled:shadow-none flex items-center justify-center gap-2 tracking-wide"
             >
               {coverLetterTab.isGenerating ? (
                 <>
@@ -1116,17 +1116,17 @@ export function AnalysisResults({ results, coverLetterTab, onEnhanceWithDeepDive
                 </>
               ) : coverLetterTab.text ? (
                 <>
-                  <CheckCircle2 className="w-5 h-5" />
+                  <CheckCircle2 className="w-5 h-5" strokeWidth={1.5} />
                   Cover Letter Generated
                 </>
               ) : coverLetterTab.error ? (
                 <>
-                  <Sparkles className="w-5 h-5" />
+                  <Sparkles className="w-5 h-5" strokeWidth={1.5} />
                   Try Again
                 </>
               ) : (
                 <>
-                  <Sparkles className="w-5 h-5" />
+                  <Sparkles className="w-5 h-5" strokeWidth={1.5} />
                   Generate Cover Letter
                 </>
               )}
@@ -1134,28 +1134,28 @@ export function AnalysisResults({ results, coverLetterTab, onEnhanceWithDeepDive
 
             {/* Show textarea only after generation */}
             {coverLetterTab.text && (
-              <div className="mt-4 flex-1 min-h-0 flex flex-col">
+              <div className="mt-6 flex-1 min-h-0 flex flex-col">
                 <div className="flex items-center justify-end gap-2 mb-3 flex-shrink-0">
                   <button
                     onClick={coverLetterTab.onCopy}
-                    className="flex items-center gap-2 px-4 py-2 bg-white hover:bg-slate-50 border border-slate-200 text-slate-700 text-sm font-medium rounded-lg transition-colors shadow-sm"
+                    className="flex items-center gap-2 px-4 py-2 bg-white hover:bg-stone-50 border border-stone-200 text-stone-700 text-sm font-medium rounded-sm transition-colors shadow-[0_2px_20px_-6px_rgba(0,0,0,0.06)] hover:shadow-[0_4px_20px_-6px_rgba(0,0,0,0.1)]"
                   >
-                    {coverLetterTab.copied ? <Check className="w-4 h-4 text-indigo-500" /> : <Copy className="w-4 h-4" />}
+                    {coverLetterTab.copied ? <Check className="w-4 h-4 text-[#0A2647]" strokeWidth={1.5} /> : <Copy className="w-4 h-4" strokeWidth={1.5} />}
                     {coverLetterTab.copied ? "Copied" : "Copy"}
                   </button>
                   <button
                     onClick={coverLetterTab.onDownloadPdf}
                     disabled={coverLetterTab.isDownloadingPdf}
-                    className="flex items-center gap-2 px-4 py-2 bg-white hover:bg-slate-50 disabled:bg-slate-100 border border-slate-200 text-slate-700 text-sm font-medium rounded-lg transition-colors shadow-sm"
+                    className="flex items-center gap-2 px-4 py-2 bg-white hover:bg-stone-50 disabled:bg-stone-100 border border-stone-200 text-stone-700 text-sm font-medium rounded-sm transition-colors shadow-[0_2px_20px_-6px_rgba(0,0,0,0.06)] hover:shadow-[0_4px_20px_-6px_rgba(0,0,0,0.1)] disabled:shadow-none"
                   >
-                    <FileText className="w-4 h-4" />
+                    <FileText className="w-4 h-4" strokeWidth={1.5} />
                     {coverLetterTab.isDownloadingPdf ? "Downloading..." : "Download PDF"}
                   </button>
                 </div>
                 <textarea
                   value={coverLetterTab.text}
                   onChange={(e) => coverLetterTab.onTextChange(e.target.value)}
-                  className="w-full flex-1 min-h-[320px] px-5 py-4 bg-white text-slate-800 border border-slate-200 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:border-transparent outline-none resize-none placeholder:text-slate-400 leading-relaxed shadow-sm"
+                  className="w-full flex-1 min-h-[320px] px-5 py-4 bg-white text-[#1a1a1a] border border-stone-200 rounded-sm focus:ring-2 focus:ring-[#0A2647]/20 focus:border-[#0A2647] outline-none resize-none placeholder:text-stone-400 leading-relaxed shadow-[0_2px_20px_-6px_rgba(0,0,0,0.06)] font-light"
                 />
               </div>
             )}

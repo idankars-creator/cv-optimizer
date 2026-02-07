@@ -18,7 +18,8 @@ import {
   Loader2,
   Link as LinkIcon,
   FileSearch,
-  Pen
+  Pen,
+  Coins
 } from "lucide-react";
 import { saveAnalysisToSession } from "@/lib/analysisSession";
 import { AuthModal, useAuthModal } from "@/components/shared/AuthModal";
@@ -563,7 +564,7 @@ export function OptimizerClient() {
 
 
           {/* CTA Button */}
-          <div className="mt-14 flex justify-center">
+          <div className="mt-14 flex flex-col items-center gap-4">
             <button
               onClick={handleAnalyze}
               disabled={!canAnalyze || isAnalyzing}
@@ -581,6 +582,20 @@ export function OptimizerClient() {
                 </>
               )}
             </button>
+            
+            {/* Token Cost Info */}
+            <div className="flex items-center gap-2 px-4 py-2 bg-[#B8860B]/5 border border-[#B8860B]/20 rounded-sm">
+              <Coins className="w-4 h-4 text-[#B8860B]" strokeWidth={2} />
+              <span className="text-sm text-stone-600 font-light">
+                <span className="font-medium text-[#B8860B]">1 Token</span> per optimization
+              </span>
+              <Link 
+                href="/pricing"
+                className="text-xs text-[#0A2647] hover:text-[#0d3259] underline font-medium ml-1"
+              >
+                Get more
+              </Link>
+            </div>
           </div>
 
           {/* Helper Text */}

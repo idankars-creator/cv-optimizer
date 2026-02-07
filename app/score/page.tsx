@@ -153,54 +153,58 @@ export default function ScoreTeaserPage() {
 
   const getScoreColor = (score: number) => {
     if (score <= 50) return { text: "text-red-600", bg: "bg-red-500", ring: "ring-red-500" };
-    if (score <= 75) return { text: "text-amber-600", bg: "bg-amber-500", ring: "ring-amber-500" };
-    return { text: "text-indigo-600", bg: "bg-indigo-500", ring: "ring-indigo-500" };
+    if (score <= 75) return { text: "text-[#B8860B]", bg: "bg-[#B8860B]", ring: "ring-[#B8860B]" };
+    return { text: "text-[#0A2647]", bg: "bg-[#0A2647]", ring: "ring-[#0A2647]" };
   };
 
   const scoreColor = result ? getScoreColor(result.score) : getScoreColor(0);
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-indigo-50/30">
-      {/* Header */}
-      <header className="w-full px-6 lg:px-12 py-6 border-b border-slate-100 bg-white/80 backdrop-blur-sm">
-        <div className="max-w-5xl mx-auto flex items-center justify-between">
+    <div className="min-h-screen bg-[#FAFAF8] text-[#1a1a1a]">
+      {/* Header - Premium Full Width Navbar */}
+      <header className="fixed top-0 left-0 right-0 z-50 w-full bg-white/90 backdrop-blur-md border-b border-stone-200/60">
+        <div className="w-full px-8 md:px-16 h-20 flex items-center justify-between">
+          {/* Logo - Far Left */}
           <Logo variant="dark" size="md" />
+          
+          {/* Back Button - Far Right */}
           <Link 
             href="/"
-            className="flex items-center gap-2 text-sm text-slate-500 hover:text-slate-900 transition-colors"
+            className="flex items-center gap-2 text-sm text-stone-600 hover:text-stone-900 transition-colors tracking-wide"
           >
-            <ArrowLeft className="w-4 h-4" />
+            <ArrowLeft className="w-4 h-4" strokeWidth={1.5} />
             Back to Home
           </Link>
         </div>
       </header>
 
       {/* Main Content */}
-      <main className="w-full px-6 lg:px-12 py-12">
+      <main className="w-full px-8 lg:px-16 pt-28 pb-16">
         <div className="max-w-3xl mx-auto">
           {/* Title */}
-          <div className="text-center mb-10">
+          <div className="text-center mb-12">
             <motion.div
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
-              className="inline-flex items-center gap-2 px-4 py-2 bg-indigo-100 text-indigo-700 rounded-full text-sm font-medium mb-4"
+              className="inline-flex items-center gap-2 px-4 py-2 bg-[#0A2647]/5 text-[#0A2647] rounded-sm text-sm font-medium mb-8 tracking-wide"
             >
-              <Sparkles className="w-4 h-4" />
+              <Sparkles className="w-4 h-4" strokeWidth={1.5} />
               Free Resume Analysis
             </motion.div>
             <motion.h1
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.1 }}
-              className="text-3xl sm:text-4xl lg:text-5xl font-bold text-slate-900 mb-4"
+              className="font-serif text-4xl sm:text-5xl font-light text-[#1a1a1a] mb-5"
             >
               Get Your Resume Score
             </motion.h1>
+            <div className="w-16 h-px bg-[#0A2647] mx-auto mb-6" />
             <motion.p
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.2 }}
-              className="text-lg text-slate-600 max-w-xl mx-auto"
+              className="text-lg text-stone-500 max-w-xl mx-auto font-light"
             >
               See how your resume stacks up for your target role. No sign-up required.
             </motion.p>
@@ -221,40 +225,40 @@ export default function ScoreTeaserPage() {
                   onDragOver={(e) => { e.preventDefault(); setIsDragging(true); }}
                   onDragLeave={() => setIsDragging(false)}
                   onDrop={handleDrop}
-                  className={`relative border-2 border-dashed rounded-2xl p-10 text-center transition-all bg-white shadow-sm ${
+                  className={`relative border-2 border-dashed rounded-sm p-10 text-center transition-all bg-white shadow-[0_2px_20px_-6px_rgba(0,0,0,0.06)] ${
                     isDragging
-                      ? "border-indigo-500 bg-indigo-50"
+                      ? "border-[#0A2647] bg-[#0A2647]/5"
                       : file
-                        ? "border-indigo-500 bg-indigo-50/50"
-                        : "border-slate-200 hover:border-slate-300"
+                        ? "border-[#0A2647] bg-[#0A2647]/5"
+                        : "border-stone-200 hover:border-stone-300"
                   }`}
                 >
                   {file ? (
                     <div className="flex items-center justify-center gap-4">
-                      <div className="w-14 h-14 rounded-xl bg-indigo-100 flex items-center justify-center">
-                        <FileCheck className="w-7 h-7 text-indigo-600" />
+                      <div className="w-14 h-14 rounded-full bg-[#0A2647]/5 flex items-center justify-center">
+                        <FileCheck className="w-7 h-7 text-[#0A2647]" strokeWidth={1.5} />
                       </div>
                       <div className="text-left">
-                        <p className="font-semibold text-slate-900">{file.name}</p>
-                        <p className="text-sm text-slate-500">
+                        <p className="font-serif text-base text-[#1a1a1a]">{file.name}</p>
+                        <p className="text-sm text-stone-500 font-light">
                           {(file.size / 1024).toFixed(1)} KB • Ready to analyze
                         </p>
                       </div>
                       <button
                         onClick={() => setFile(null)}
-                        className="p-2 hover:bg-slate-100 rounded-lg transition-colors ml-4"
+                        className="p-2 hover:bg-stone-100 rounded-sm transition-colors ml-4"
                       >
-                        <X className="w-5 h-5 text-slate-400" />
+                        <X className="w-5 h-5 text-stone-400" strokeWidth={1.5} />
                       </button>
                     </div>
                   ) : (
                     <>
-                      <Upload className="w-12 h-12 text-slate-400 mx-auto mb-4" />
-                      <p className="text-lg font-medium text-slate-900 mb-2">
+                      <Upload className="w-12 h-12 text-stone-400 mx-auto mb-4" strokeWidth={1.5} />
+                      <p className="font-serif text-lg text-[#1a1a1a] mb-2">
                         Drop your resume here
                       </p>
-                      <p className="text-slate-500 mb-4">PDF format only (max 5MB)</p>
-                      <label className="inline-flex items-center gap-2 px-6 py-3 bg-indigo-600 hover:bg-indigo-700 text-white font-semibold rounded-xl cursor-pointer transition-colors">
+                      <p className="text-stone-500 mb-4 font-light">PDF format only (max 5MB)</p>
+                      <label className="inline-flex items-center gap-2 px-6 py-3 bg-[#0A2647] hover:bg-[#0d3259] text-white font-medium rounded-sm cursor-pointer transition-colors tracking-wide">
                         <span>Browse Files</span>
                         <input
                           type="file"
@@ -268,9 +272,9 @@ export default function ScoreTeaserPage() {
                 </div>
 
                 {/* Goal Selector */}
-                <div className="bg-white rounded-2xl p-6 border border-slate-200 shadow-sm">
-                  <label className="flex items-center gap-2 text-sm font-medium text-slate-700 mb-3">
-                    <Target className="w-4 h-4 text-indigo-600" />
+                <div className="bg-white rounded-sm p-6 border border-stone-200 shadow-[0_2px_20px_-6px_rgba(0,0,0,0.06)]">
+                  <label className="flex items-center gap-2 text-sm font-medium text-[#1a1a1a] mb-3 tracking-wide">
+                    <Target className="w-4 h-4 text-[#0A2647]" strokeWidth={1.5} />
                     Target Role
                   </label>
                   <GoalSelector
@@ -281,9 +285,9 @@ export default function ScoreTeaserPage() {
 
                 {/* Error */}
                 {error && (
-                  <div className="p-4 bg-red-50 border border-red-200 rounded-xl flex items-center gap-3 text-red-700">
-                    <AlertCircle className="w-5 h-5 flex-shrink-0" />
-                    <span>{error}</span>
+                  <div className="p-4 bg-red-50/80 border border-red-200/60 rounded-sm flex items-center gap-3 text-red-700">
+                    <AlertCircle className="w-5 h-5 flex-shrink-0" strokeWidth={1.5} />
+                    <span className="font-light">{error}</span>
                   </div>
                 )}
 
@@ -291,9 +295,9 @@ export default function ScoreTeaserPage() {
                 <button
                   onClick={handleAnalyze}
                   disabled={!file || !targetRole || isAnalyzing}
-                  className="w-full py-4 bg-indigo-600 hover:bg-indigo-700 disabled:bg-slate-200 disabled:text-slate-400 text-white font-bold rounded-xl transition-all flex items-center justify-center gap-3 text-lg shadow-lg shadow-indigo-600/20 disabled:shadow-none"
+                  className="w-full py-4 bg-[#0A2647] hover:bg-[#0d3259] disabled:bg-stone-200 disabled:text-stone-400 text-white font-medium rounded-sm transition-all flex items-center justify-center gap-3 text-lg shadow-sm hover:shadow-md disabled:shadow-none tracking-wide"
                 >
-                  <Sparkles className="w-5 h-5" />
+                  <Sparkles className="w-5 h-5" strokeWidth={1.5} />
                   Calculate My Score
                 </button>
               </motion.div>
@@ -306,15 +310,15 @@ export default function ScoreTeaserPage() {
                 initial={{ opacity: 0, scale: 0.95 }}
                 animate={{ opacity: 1, scale: 1 }}
                 exit={{ opacity: 0, scale: 0.95 }}
-                className="text-center py-20 bg-white rounded-2xl border border-slate-200 shadow-sm"
+                className="text-center py-20 bg-white rounded-sm border border-stone-200 shadow-[0_2px_20px_-6px_rgba(0,0,0,0.06)]"
               >
                 <div className="relative inline-block mb-8">
-                  <div className="w-24 h-24 rounded-full border-4 border-slate-100 flex items-center justify-center">
-                    <Loader2 className="w-10 h-10 text-indigo-600 animate-spin" />
+                  <div className="w-24 h-24 rounded-full border-4 border-stone-100 flex items-center justify-center">
+                    <Loader2 className="w-10 h-10 text-[#0A2647] animate-spin" strokeWidth={1.5} />
                   </div>
                 </div>
-                <h2 className="text-2xl font-bold text-slate-900 mb-3">Analyzing Your Resume...</h2>
-                <p className="text-slate-500">
+                <h2 className="font-serif text-2xl font-light text-[#1a1a1a] mb-3">Analyzing Your Resume...</h2>
+                <p className="text-stone-500 font-light">
                   Checking structure, keywords, and role alignment
                 </p>
               </motion.div>
@@ -330,23 +334,23 @@ export default function ScoreTeaserPage() {
                 className="space-y-6"
               >
                 {/* Score Card */}
-                <div className="bg-white rounded-2xl border border-slate-200 shadow-lg overflow-hidden">
-                  <div className="bg-gradient-to-r from-indigo-600 to-indigo-500 p-8">
+                <div className="bg-white rounded-sm border border-stone-200 shadow-[0_4px_40px_-12px_rgba(0,0,0,0.08)] overflow-hidden">
+                  <div className="bg-gradient-to-r from-[#0A2647] to-[#0d3259] p-8">
                     <div className="flex flex-col md:flex-row items-center justify-between gap-8">
                       {/* Left: Summary */}
                       <div className="flex-1 text-center md:text-left">
                         <div className="flex items-center justify-center md:justify-start gap-2 mb-3">
-                          <Target className="w-5 h-5 text-white/80" />
+                          <Target className="w-5 h-5 text-white/80" strokeWidth={1.5} />
                           <span className="text-white/80 text-sm font-medium uppercase tracking-wider">
                             Analysis Complete
                           </span>
                         </div>
-                        <h2 className="text-2xl md:text-3xl font-bold text-white mb-3">
+                        <h2 className="font-serif text-2xl md:text-3xl font-light text-white mb-3">
                           {result.score <= 50 ? "Room for Improvement" : 
                            result.score <= 75 ? "Good Foundation!" : 
                            "Excellent Resume!"}
                         </h2>
-                        <p className="text-white/90 text-lg leading-relaxed">
+                        <p className="text-white/90 text-lg leading-relaxed font-light">
                           {result.summary}
                         </p>
                       </div>
@@ -380,10 +384,10 @@ export default function ScoreTeaserPage() {
                           </svg>
                           <div className="absolute inset-0 flex items-center justify-center">
                             <div className="text-center">
-                              <span className="text-4xl font-bold text-white">
+                              <span className="font-serif text-4xl font-light text-white">
                                 {displayScore}
                               </span>
-                              <p className="text-white/70 text-sm font-medium">
+                              <p className="text-white/70 text-sm font-light">
                                 / 100
                               </p>
                             </div>
@@ -394,50 +398,50 @@ export default function ScoreTeaserPage() {
                   </div>
 
                   {/* Run Again Button */}
-                  <div className="p-4 bg-slate-50 border-t border-slate-100">
+                  <div className="p-4 bg-stone-50 border-t border-stone-100">
                     <button
                       onClick={handleStartOver}
-                      className="w-full flex items-center justify-center gap-2 py-3 bg-white hover:bg-slate-50 border border-slate-200 text-slate-700 font-medium rounded-xl transition-colors"
+                      className="w-full flex items-center justify-center gap-2 py-3 bg-white hover:bg-stone-50 border border-stone-200 text-stone-700 font-medium rounded-sm transition-colors tracking-wide"
                     >
-                      <RotateCcw className="w-4 h-4" />
+                      <RotateCcw className="w-4 h-4" strokeWidth={1.5} />
                       Analyze Another Resume
                     </button>
                   </div>
                 </div>
 
                 {/* Blurred Analysis Preview */}
-                <div className="relative bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
+                <div className="relative bg-white rounded-sm border border-stone-200 shadow-[0_2px_20px_-6px_rgba(0,0,0,0.06)] overflow-hidden">
                   {/* Blurred content */}
                   <div className="p-6 filter blur-md select-none pointer-events-none opacity-60">
                     <div className="flex items-center gap-3 mb-6">
-                      <div className="w-10 h-10 rounded-xl bg-indigo-100 flex items-center justify-center">
-                        <FileText className="w-5 h-5 text-indigo-600" />
+                      <div className="w-10 h-10 rounded-full bg-[#0A2647]/5 flex items-center justify-center">
+                        <FileText className="w-5 h-5 text-[#0A2647]" strokeWidth={1.5} />
                       </div>
                       <div>
-                        <h3 className="text-lg font-bold text-slate-900">Detailed Analysis</h3>
-                        <p className="text-slate-500 text-sm">Strengths, weaknesses, and recommendations</p>
+                        <h3 className="font-serif text-lg text-[#1a1a1a]">Detailed Analysis</h3>
+                        <p className="text-stone-500 text-sm font-light">Strengths, weaknesses, and recommendations</p>
                       </div>
                     </div>
                     
                     <div className="grid md:grid-cols-2 gap-4 mb-6">
-                      <div className="bg-slate-50 border border-slate-200 rounded-xl p-5">
-                        <h4 className="font-semibold text-slate-900 mb-4 flex items-center gap-2">
-                          <Check className="w-5 h-5 text-indigo-600" />
+                      <div className="bg-stone-50 border border-stone-200 rounded-sm p-5">
+                        <h4 className="font-medium text-[#1a1a1a] mb-4 flex items-center gap-2">
+                          <Check className="w-5 h-5 text-[#0A2647]" strokeWidth={1.5} />
                           Strengths
                         </h4>
-                        <ul className="space-y-2 text-slate-600 text-sm">
+                        <ul className="space-y-2 text-stone-600 text-sm font-light">
                           <li>• Strong technical skills alignment</li>
                           <li>• Clear work history progression</li>
                           <li>• Good use of action verbs</li>
                         </ul>
                       </div>
                       
-                      <div className="bg-slate-50 border border-slate-200 rounded-xl p-5">
-                        <h4 className="font-semibold text-slate-900 mb-4 flex items-center gap-2">
-                          <TrendingUp className="w-5 h-5 text-amber-600" />
+                      <div className="bg-stone-50 border border-stone-200 rounded-sm p-5">
+                        <h4 className="font-medium text-[#1a1a1a] mb-4 flex items-center gap-2">
+                          <TrendingUp className="w-5 h-5 text-[#B8860B]" strokeWidth={1.5} />
                           Areas to Improve
                         </h4>
-                        <ul className="space-y-2 text-slate-600 text-sm">
+                        <ul className="space-y-2 text-stone-600 text-sm font-light">
                           <li>• Add quantified achievements</li>
                           <li>• Include more keywords</li>
                           <li>• Strengthen summary section</li>
@@ -446,20 +450,20 @@ export default function ScoreTeaserPage() {
                     </div>
 
                     <div className="grid md:grid-cols-2 gap-4">
-                      <div className="bg-slate-50 border border-slate-200 rounded-xl p-4">
-                        <h4 className="font-medium text-slate-900 mb-2">Keywords Found</h4>
+                      <div className="bg-stone-50 border border-stone-200 rounded-sm p-4">
+                        <h4 className="font-medium text-[#1a1a1a] mb-2">Keywords Found</h4>
                         <div className="flex flex-wrap gap-2">
-                          <span className="px-2 py-1 bg-indigo-100 text-indigo-700 rounded text-xs">Leadership</span>
-                          <span className="px-2 py-1 bg-indigo-100 text-indigo-700 rounded text-xs">Strategy</span>
-                          <span className="px-2 py-1 bg-indigo-100 text-indigo-700 rounded text-xs">Management</span>
+                          <span className="px-2 py-1 bg-[#0A2647]/10 text-[#0A2647] rounded-sm text-xs font-light">Leadership</span>
+                          <span className="px-2 py-1 bg-[#0A2647]/10 text-[#0A2647] rounded-sm text-xs font-light">Strategy</span>
+                          <span className="px-2 py-1 bg-[#0A2647]/10 text-[#0A2647] rounded-sm text-xs font-light">Management</span>
                         </div>
                       </div>
-                      <div className="bg-slate-50 border border-slate-200 rounded-xl p-4">
-                        <h4 className="font-medium text-slate-900 mb-2">Missing Keywords</h4>
+                      <div className="bg-stone-50 border border-stone-200 rounded-sm p-4">
+                        <h4 className="font-medium text-[#1a1a1a] mb-2">Missing Keywords</h4>
                         <div className="flex flex-wrap gap-2">
-                          <span className="px-2 py-1 bg-red-100 text-red-700 rounded text-xs">Agile</span>
-                          <span className="px-2 py-1 bg-red-100 text-red-700 rounded text-xs">ROI</span>
-                          <span className="px-2 py-1 bg-red-100 text-red-700 rounded text-xs">KPIs</span>
+                          <span className="px-2 py-1 bg-red-100 text-red-700 rounded-sm text-xs font-light">Agile</span>
+                          <span className="px-2 py-1 bg-red-100 text-red-700 rounded-sm text-xs font-light">ROI</span>
+                          <span className="px-2 py-1 bg-red-100 text-red-700 rounded-sm text-xs font-light">KPIs</span>
                         </div>
                       </div>
                     </div>
@@ -468,32 +472,32 @@ export default function ScoreTeaserPage() {
                   {/* Lock Overlay */}
                   <div className="absolute inset-0 flex items-center justify-center bg-gradient-to-t from-white via-white/95 to-white/80">
                     <div className="text-center px-6 max-w-md">
-                      <div className="w-16 h-16 rounded-2xl bg-slate-100 border border-slate-200 flex items-center justify-center mx-auto mb-5">
-                        <Lock className="w-8 h-8 text-slate-400" />
+                      <div className="w-16 h-16 rounded-full bg-stone-100 border border-stone-200 flex items-center justify-center mx-auto mb-5">
+                        <Lock className="w-8 h-8 text-stone-400" strokeWidth={1.5} />
                       </div>
                       
-                      <h3 className="text-xl font-bold text-slate-900 mb-2">
+                      <h3 className="font-serif text-xl text-[#1a1a1a] mb-2">
                         Unlock Full Analysis
                       </h3>
-                      <p className="text-slate-600 mb-6">
+                      <p className="text-stone-600 mb-6 font-light">
                         See exactly what's holding your resume back and get AI-powered suggestions to fix it.
                       </p>
                       
                       <SignUpButton mode="modal">
-                        <button className="inline-flex items-center gap-2 px-8 py-4 bg-indigo-600 hover:bg-indigo-700 text-white font-bold rounded-xl transition-all shadow-lg shadow-indigo-600/20">
-                          <Sparkles className="w-5 h-5" />
+                        <button className="inline-flex items-center gap-2 px-8 py-4 bg-[#0A2647] hover:bg-[#0d3259] text-white font-medium rounded-sm transition-all shadow-sm hover:shadow-md tracking-wide">
+                          <Sparkles className="w-5 h-5" strokeWidth={1.5} />
                           Create Free Account
-                          <ArrowRight className="w-5 h-5" />
+                          <ArrowRight className="w-5 h-5" strokeWidth={1.5} />
                         </button>
                       </SignUpButton>
                       
-                      <p className="text-sm text-slate-500 mt-4 flex items-center justify-center gap-4">
+                      <p className="text-sm text-stone-500 mt-4 flex items-center justify-center gap-4 font-light">
                         <span className="flex items-center gap-1">
-                          <Check className="w-4 h-4 text-indigo-600" />
+                          <Check className="w-4 h-4 text-[#0A2647]" strokeWidth={1.5} />
                           Free forever
                         </span>
                         <span className="flex items-center gap-1">
-                          <Check className="w-4 h-4 text-indigo-600" />
+                          <Check className="w-4 h-4 text-[#0A2647]" strokeWidth={1.5} />
                           No credit card
                         </span>
                       </p>
@@ -507,9 +511,26 @@ export default function ScoreTeaserPage() {
       </main>
 
       {/* Footer */}
-      <footer className="w-full px-6 lg:px-12 py-8 border-t border-slate-100 bg-white/50">
-        <div className="max-w-3xl mx-auto text-center text-slate-500 text-sm">
-          <p>Your resume is analyzed securely and never stored without your permission.</p>
+      <footer className="w-full bg-[#0A2647] border-t border-white/10 text-white/60 py-10">
+        <div className="max-w-7xl mx-auto px-8 lg:px-16">
+          <div className="flex flex-col md:flex-row items-center justify-between gap-6">
+            <div className="flex items-center gap-3">
+              <Logo variant="light" size="md" />
+            </div>
+            <div className="flex items-center gap-10 text-sm font-light tracking-wide">
+              <Link href="/pricing" className="hover:text-white transition-colors">Pricing</Link>
+              <Link href="/privacy" className="hover:text-white transition-colors">Privacy</Link>
+              <Link href="/terms" className="hover:text-white transition-colors">Terms</Link>
+              <Link href="/refund-policy" className="hover:text-white transition-colors">Refund Policy</Link>
+              <Link href="/contact" className="hover:text-white transition-colors">
+                Contact
+              </Link>
+            </div>
+            <p className="text-sm font-light">© 2026 Hired. All rights reserved.</p>
+          </div>
+          <div className="mt-6 text-center text-sm font-light text-white/50">
+            <p>Your resume is analyzed securely and never stored without your permission.</p>
+          </div>
         </div>
       </footer>
     </div>

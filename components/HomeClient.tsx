@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import { CVUpload } from "@/components/CVUpload";
 import { JobInput } from "@/components/JobInput";
 import { AnalysisMode, saveAnalysisToSession } from "@/lib/analysisSession";
-import { FileText, Sparkles, Link2, Target, Check, ArrowRight, Upload, Briefcase, ArrowLeft } from "lucide-react";
+import { FileText, Sparkles, Link2, Target, Check, ArrowRight, Upload, Briefcase, ArrowLeft, Coins } from "lucide-react";
 import {
   SignInButton,
   SignUpButton,
@@ -355,7 +355,7 @@ export function HomeClient({ initialCount }: { initialCount: number }) {
             )}
 
             {stepTab === "upload" && (
-              <div className="flex justify-center mt-10 pt-8 border-t border-stone-100">
+              <div className="flex flex-col items-center gap-4 mt-10 pt-8 border-t border-stone-100">
                 <button
                   onClick={handleAnalyze}
                   disabled={
@@ -383,6 +383,20 @@ export function HomeClient({ initialCount }: { initialCount: number }) {
                     </>
                   )}
                 </button>
+                
+                {/* Token Cost Info */}
+                <div className="flex items-center gap-2 px-4 py-2 bg-[#B8860B]/5 border border-[#B8860B]/20 rounded-sm">
+                  <Coins className="w-4 h-4 text-[#B8860B]" strokeWidth={2} />
+                  <span className="text-sm text-stone-600 font-light">
+                    <span className="font-medium text-[#B8860B]">1 Token</span> per optimization
+                  </span>
+                  <Link 
+                    href="/pricing"
+                    className="text-xs text-[#0A2647] hover:text-[#0d3259] underline font-medium ml-1"
+                  >
+                    Get more
+                  </Link>
+                </div>
               </div>
             )}
           </div>
