@@ -195,7 +195,7 @@ export default function PricingPage() {
             <div className="bg-white rounded-sm border-2 border-[#0A2647] shadow-[0_4px_40px_-12px_rgba(0,0,0,0.08)] hover:shadow-[0_8px_50px_-12px_rgba(0,0,0,0.15)] transition-all duration-300 p-8 flex flex-col relative">
               {/* Most Popular Badge */}
               <div className="absolute -top-4 left-1/2 -translate-x-1/2">
-                <span className="bg-[#0A2647] text-white text-xs font-medium px-4 py-1.5 rounded-sm shadow-sm tracking-wide">
+                <span className="bg-[#0A2647] text-white text-xs font-medium px-4 py-1.5 rounded-sm shadow-sm tracking-wide whitespace-nowrap">
                   MOST POPULAR
                 </span>
               </div>
@@ -252,7 +252,7 @@ export default function PricingPage() {
             <div className="bg-white rounded-sm border-2 border-[#B8860B] shadow-[0_4px_40px_-12px_rgba(0,0,0,0.08)] hover:shadow-[0_8px_50px_-12px_rgba(0,0,0,0.15)] transition-all duration-300 p-8 flex flex-col relative">
               {/* Best Value Badge */}
               <div className="absolute -top-4 left-1/2 -translate-x-1/2">
-                <span className="bg-[#B8860B] text-white text-xs font-medium px-4 py-1.5 rounded-sm shadow-sm tracking-wide">
+                <span className="bg-[#B8860B] text-white text-xs font-medium px-4 py-1.5 rounded-sm shadow-sm tracking-wide whitespace-nowrap">
                   BEST VALUE
                 </span>
               </div>

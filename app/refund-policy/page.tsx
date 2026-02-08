@@ -30,11 +30,20 @@ export default function RefundPolicy() {
             {/* Section 1: Introduction */}
             <section>
               <h2 className="text-lg font-bold text-gray-900 mb-3">1. Introduction</h2>
-              <p>
+              <p className="mb-4">
                 At Hired CV, we strive to provide high-quality resume optimization services. 
                 This Refund Policy outlines the terms and conditions under which refunds may be issued 
                 for our services.
               </p>
+              <div className="bg-green-50 border-2 border-green-500 rounded-lg p-4">
+                <p className="text-green-900 font-semibold text-base">
+                  ✅ 14-Day Money-Back Guarantee
+                </p>
+                <p className="text-green-800 mt-2">
+                  We are committed to your satisfaction. If you're not happy with our service, 
+                  you can request a full refund within 14 days of your purchase, no questions asked.
+                </p>
+              </div>
             </section>
 
             {/* Section 2: Service Nature */}
@@ -61,54 +70,79 @@ export default function RefundPolicy() {
 
             {/* Section 3: Refund Eligibility */}
             <section>
-              <h2 className="text-lg font-bold text-gray-900 mb-3">3. Refund Eligibility</h2>
-              <p className="mb-3">Refunds may be considered in the following circumstances:</p>
+              <h2 className="text-lg font-bold text-gray-900 mb-3">3. 14-Day Money-Back Guarantee</h2>
+              <p className="mb-3">
+                <strong>We offer a 14-day money-back guarantee on all credit purchases.</strong> 
+                You may request a full refund within 14 days of your purchase for any reason, including:
+              </p>
               <ul className="list-disc list-outside ml-5 space-y-2">
+                <li>
+                  <strong>Not Satisfied:</strong> If you're not happy with the quality of our AI optimization service.
+                </li>
                 <li>
                   <strong>Service Not Delivered:</strong> If the optimization service fails to complete 
-                  due to a technical error on our end, you may be eligible for a full refund.
+                  due to a technical error on our end.
                 </li>
                 <li>
-                  <strong>Duplicate Charges:</strong> If you were charged multiple times for a single 
-                  service, we will refund the duplicate charges.
+                  <strong>Duplicate Charges:</strong> If you were charged multiple times for a single purchase.
                 </li>
                 <li>
-                  <strong>Processing Errors:</strong> If a payment was processed in error, we will issue 
-                  a full refund upon verification.
+                  <strong>Processing Errors:</strong> If a payment was processed in error.
+                </li>
+                <li>
+                  <strong>Changed Your Mind:</strong> If you simply decide you don't want to use the service.
                 </li>
               </ul>
+              <p className="mt-3 bg-yellow-50 border border-yellow-200 rounded-lg p-3 text-sm">
+                <strong>Important:</strong> Refund requests must be submitted within 14 days of purchase. 
+                After 14 days, refunds will be evaluated on a case-by-case basis.
+              </p>
             </section>
 
-            {/* Section 4: Non-Refundable Situations */}
+            {/* Section 4: After 14-Day Period */}
             <section>
-              <h2 className="text-lg font-bold text-gray-900 mb-3">4. Non-Refundable Situations</h2>
-              <p className="mb-3">Refunds will generally not be issued in the following cases:</p>
+              <h2 className="text-lg font-bold text-gray-900 mb-3">4. After 14-Day Period</h2>
+              <p className="mb-3">
+                After the 14-day guarantee period, refunds may still be considered in exceptional circumstances:
+              </p>
               <ul className="list-disc list-outside ml-5 space-y-2">
-                <li>If the service was successfully completed and delivered</li>
-                <li>If you are dissatisfied with the AI-generated content (as it requires your review and editing)</li>
-                <li>If you did not receive job interviews or offers (we do not guarantee employment outcomes)</li>
-                <li>If you changed your mind after the service was rendered</li>
-                <li>If the issue is due to user error (e.g., incorrect file upload, wrong job description)</li>
+                <li>
+                  <strong>Technical Issues:</strong> Persistent technical problems that prevent service use.
+                </li>
+                <li>
+                  <strong>Unauthorized Charges:</strong> Charges made without your authorization.
+                </li>
+                <li>
+                  <strong>Billing Errors:</strong> Incorrect amounts charged or duplicate transactions.
+                </li>
               </ul>
+              <p className="mt-3 text-sm text-gray-600">
+                Note: We do not guarantee job interviews, offers, or employment outcomes. 
+                Refunds will not be issued based solely on employment results.
+              </p>
             </section>
 
             {/* Section 5: Refund Process */}
             <section>
-              <h2 className="text-lg font-bold text-gray-900 mb-3">5. Refund Request Process</h2>
+              <h2 className="text-lg font-bold text-gray-900 mb-3">5. How to Request a Refund</h2>
               <p className="mb-3">
-                To request a refund, please contact our support team through our contact form. 
+                To request a refund within the 14-day guarantee period, please contact our support team. 
                 Include the following information:
               </p>
               <ul className="list-disc list-outside ml-5 space-y-2">
-                <li>Your account email or transaction ID</li>
+                <li>Your account email address</li>
+                <li>Transaction ID or PayPal receipt</li>
                 <li>Date of purchase</li>
-                <li>Reason for refund request</li>
-                <li>Any relevant documentation or screenshots</li>
+                <li>Brief reason for refund (optional for requests within 14 days)</li>
               </ul>
-              <p className="mt-3">
-                We will review your request within 5-7 business days and notify you of our decision. 
-                If approved, refunds will be processed to the original payment method within 10-14 business days.
-              </p>
+              <div className="mt-4 bg-blue-50 border border-blue-200 rounded-lg p-4">
+                <p className="font-semibold text-blue-900 mb-2">Refund Timeline:</p>
+                <ul className="space-y-1 text-blue-800 text-sm">
+                  <li>• <strong>Within 14 days:</strong> Instant approval, no questions asked</li>
+                  <li>• <strong>Review time:</strong> 1-2 business days</li>
+                  <li>• <strong>Processing time:</strong> 5-10 business days to your original payment method</li>
+                </ul>
+              </div>
             </section>
 
             {/* Section 6: Subscription Services */}

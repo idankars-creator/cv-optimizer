@@ -649,22 +649,22 @@ Optimization improves PRESENTATION only. It CANNOT change the candidate's actual
 
 | Original Score | Max Improvement | Reasoning |
 |----------------|-----------------|-----------|
-| 0-34 (fundamental mismatch) | +10-12 pts max | Wrong field/education. Wording can't fix missing qualifications. |
-| 35-54 (weak fit) | +15-18 pts max | Some transferable elements. Can highlight overlaps better. |
-| 55-74 (moderate fit) | +18-22 pts max | Adjacent field. Can reposition relevant experience effectively. |
-| 75+ (strong fit) | +10-15 pts max | Already good fit. Polish only. |
+| 0-34 (fundamental mismatch) | +18-22 pts max | Wrong field/education. Can improve ATS keywords and presentation significantly. |
+| 35-54 (weak fit) | +22-28 pts max | Some transferable elements. Better keyword integration and impact framing. |
+| 55-74 (moderate fit) | +25-32 pts max | Adjacent field. Strong repositioning of relevant experience and skills. |
+| 75+ (strong fit) | +15-20 pts max | Already good fit. Polish, keyword optimization, and impact enhancement. |
 
 **HARD RULES:**
-- If original scored < 35 due to domain mismatch → Optimized score CANNOT exceed 47
-- If original was capped by seniority → Optimized inherits same cap + max 15 pts
-- If role REQUIRES specific education (social worker, lawyer, doctor, nurse, CPA, engineer with PE) and candidate LACKS it → Optimized score CANNOT exceed original + 12
+- If original scored < 35 due to domain mismatch → Optimized score CANNOT exceed 55
+- If original was capped by seniority → Optimized inherits same cap + max 22 pts
+- If role REQUIRES specific education (social worker, lawyer, doctor, nurse, CPA, engineer with PE) and candidate LACKS it → Optimized score CANNOT exceed original + 20
 - The optimized score reflects "best possible presentation of THIS candidate" — not "how good does the text read in isolation"
 
 **EXAMPLE:**
 - Analyst → Social Worker: Original 22. Missing: social work degree (mandatory), clinical hours, license.
-  Optimization adds better keywords and ATS formatting = +10. Optimized = 32. NOT 78.
+  Optimization adds better keywords, ATS formatting, and transferable skills framing = +20. Optimized = 42. NOT 78.
 - Junior Dev → Senior Dev: Original 50. Missing: years of experience.
-  Optimization highlights relevant projects better = +18. Optimized = 68. NOT 90.
+  Optimization highlights relevant projects and technical depth = +26. Optimized = 76. NOT 95.
 
 ════════════════════════════════════════════════════════════════════════════════
 
