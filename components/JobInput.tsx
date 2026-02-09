@@ -114,7 +114,10 @@ export function JobInput({
             className="w-full px-0 py-3 border-b border-stone-200 text-[#1a1a1a] text-sm focus:outline-none focus:border-[#0A2647] transition-colors placeholder:text-stone-300 bg-transparent font-light"
           />
           <p className="mt-3 text-xs text-stone-400 font-light">
-            We'll extract the job details automatically
+            We'll extract the job details automatically.
+            <span className="block mt-1 text-stone-500">
+              Note: Use the job's full page URL (click on the job title first, not just the listing).
+            </span>
           </p>
         </div>
       ) : (
