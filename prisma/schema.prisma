@@ -42,8 +42,10 @@ model Feedback {
   source    String?
   createdAt DateTime @default(now())
 
-  userId    String?
-  user      User?    @relation(fields: [userId], references: [id])
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
 }
 
 model Purchase {

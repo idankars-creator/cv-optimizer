@@ -9,40 +9,36 @@ const localFeedback: Array<{
   comment: string;
   source: string;
   createdAt: Date;
-  userId?: string;
+  userId: string;
 }> = [];
 
 export async function POST(req: Request) {
   try {
     const body = await req.json();
     const { rating, comment, source } = body;
-    
+
     // Validate required fields
     if (!rating || (typeof rating !== 'number' && isNaN(Number(rating)))) {
       return NextResponse.json({ error: "Rating is required" }, { status: 400 });
     }
 
     const user = await currentUser();
-    
+
+    if (!user) {
+      return NextResponse.json({ error: "Authentication required" }, { status: 401 });
+    }
+
     try {
-      // Try to save to database
-      let userConnect = {};
-
-      if (user) {
-        // Ensure user exists in DB (sync Clerk -> Neon)
-        // New users get 1 free credit, existing users keep their credits
-        await prisma.user.upsert({
-          where: { id: user.id },
-          update: { email: user.emailAddresses[0]?.emailAddress || "" },
-          create: {
-            id: user.id,
-            email: user.emailAddresses[0]?.emailAddress || "no-email",
-            credits: 5, // New users start with 5 free credits
-          },
-        });
-
-        userConnect = { connect: { id: user.id } };
-      }
+      // Ensure user exists in DB (sync Clerk -> Neon)
+      await prisma.user.upsert({
+        where: { id: user.id },
+        update: { email: user.emailAddresses[0]?.emailAddress || "" },
+        create: {
+          id: user.id,
+          email: user.emailAddresses[0]?.emailAddress || "no-email",
+          credits: 5, // New users start with 5 free credits
+        },
+      });
 
       // Save feedback to database
       const feedback = await prisma.feedback.create({
@@ -50,7 +46,7 @@ export async function POST(req: Request) {
           rating: Number(rating),
           comment: comment || "",
           source: source || "unknown",
-          user: Object.keys(userConnect).length > 0 ? userConnect : undefined,
+          user: { connect: { id: user.id } },
         },
       });
 
@@ -69,7 +65,7 @@ export async function POST(req: Request) {
         comment: comment || "",
         source: source || "unknown",
         createdAt: new Date(),
-        userId: user?.id,
+        userId: user.id,
       };
       localFeedback.push(localEntry);
       
