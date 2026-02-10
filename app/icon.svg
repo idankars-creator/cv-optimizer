@@ -1,0 +1,13 @@
+<svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg" fill="none">
+  <!-- Background -->
+  <rect width="100" height="100" fill="#0A2647" rx="12"/>
+
+  <!-- Left vertical bar (white) -->
+  <rect x="20" y="22" width="14" height="56" fill="white" rx="2"/>
+
+  <!-- Right vertical bar (white) -->
+  <rect x="66" y="22" width="14" height="56" fill="white" rx="2"/>
+
+  <!-- Middle diagonal bar (gold accent) -->
+  <path d="M 34 44 L 66 54 L 66 62 L 34 52 Z" fill="#B8860B"/>
+</svg>
