@@ -11,6 +11,7 @@ import {
 import { RatingWidget } from "@/components/feedback";
 import { Toaster } from "sonner";
 import { UserSyncProvider } from "@/components/UserSyncProvider";
+import { InAppBrowserAlert } from "@/components/InAppBrowserAlert";
 import "./globals.css";
 
 // Primary UI font
@@ -67,6 +68,7 @@ export default function RootLayout({
     <ClerkProvider>
       <html lang="en" className="scroll-smooth">
         <body className={`${inter.variable} ${jetbrainsMono.variable} ${merriweather.variable} ${lato.variable} ${montserrat.variable} ${playfair.variable} font-sans`}>
+          <InAppBrowserAlert />
           <UserSyncProvider>
             {children}
           </UserSyncProvider>
