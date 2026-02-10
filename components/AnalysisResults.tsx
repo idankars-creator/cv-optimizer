@@ -282,9 +282,9 @@ export function AnalysisResults({ results, coverLetterTab, onEnhanceWithDeepDive
     { id: "overview" as const, label: "Overview", step: 1 },
     // ENHANCE FEATURE TEMPORARILY HIDDEN
     // ...(onEnhanceWithDeepDive ? [{ id: "enhance" as const, label: "Enhance", step: 2, highlight: true }] : []),
-    { id: "changes" as const, label: `Review Changes`, step: 3, count: pendingChangesCount > 0 ? pendingChangesCount : undefined, badge: acceptedChangesCount > 0 ? `${acceptedChangesCount} accepted` : undefined },
-    { id: "optimized" as const, label: "Optimized CV", step: 4 },
-    ...(coverLetterTab ? [{ id: "cover-letter" as const, label: "Cover Letter", step: 5 }] : []),
+    { id: "changes" as const, label: `Review Changes`, step: 2, count: pendingChangesCount > 0 ? pendingChangesCount : undefined, badge: acceptedChangesCount > 0 ? `${acceptedChangesCount} accepted` : undefined },
+    { id: "optimized" as const, label: "Optimized CV", step: 3 },
+    ...(coverLetterTab ? [{ id: "cover-letter" as const, label: "Cover Letter", step: 4 }] : []),
   ];
 
   return (
