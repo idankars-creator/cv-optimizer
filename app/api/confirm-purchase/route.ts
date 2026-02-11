@@ -59,7 +59,7 @@ export async function POST(req: Request) {
       create: {
         id: userId,
         email: "pending@update.com", // Will be updated on next auth sync
-        credits: 5 + creditsToAdd,   // Default 5 + purchased
+        credits: 1 + creditsToAdd,   // Default 1 + purchased
       },
     });
 

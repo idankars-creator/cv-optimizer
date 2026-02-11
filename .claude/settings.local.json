@@ -1,7 +1,13 @@
 {
   "permissions": {
     "allow": [
-      "Bash(git push:*)"
+      "Bash(git push:*)",
+      "Bash(git add:*)",
+      "Bash(git commit -m \"$\\(cat <<''EOF''\nfix: pricing badge wrapping + improve score gap + update refund policy\n\n- Add whitespace-nowrap to MOST POPULAR and BEST VALUE badges to prevent \n  them from breaking into 2 rows on laptop screens at 100% zoom\n- Increase score improvement tiers by ~8-10 points to show more visible \n  gap between original and optimized scores while staying realistic\n- Update refund policy with 14-day money-back guarantee\n\nCo-Authored-By: Claude Opus 4.5 <noreply@anthropic.com>\nEOF\n\\)\")",
+      "Bash(npx prisma migrate dev:*)",
+      "Bash(npx prisma db push:*)",
+      "Bash(npx prisma generate:*)",
+      "Bash(git commit:*)"
     ]
   }
 }

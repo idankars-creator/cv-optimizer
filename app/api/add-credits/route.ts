@@ -55,7 +55,7 @@ export async function POST(request: Request) {
           create: {
             id: userId,
             email: userEmail,
-            credits: 5, // New users start with 5 free credits
+            credits: 1, // New users start with 1 free credit
           },
       });
 
