@@ -2,7 +2,12 @@
 const nextConfig = {
   experimental: {
     serverActions: {
-      allowedOrigins: ["localhost:3000"],
+      allowedOrigins: [
+        "localhost:3000",
+        "localhost:3001",
+        "www.hired-cv.com",
+        "hired-cv.com",
+      ],
     },
   },
 };

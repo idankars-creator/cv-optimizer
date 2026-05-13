@@ -1,4 +1,6 @@
-# CV Optimizer
+# Hired
+
+Production: https://www.hired-cv.com
 
 AI-assisted CV analysis and optimization focused on **passing initial screening** (ATS + recruiter).
 

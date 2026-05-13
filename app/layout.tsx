@@ -54,9 +54,24 @@ const playfair = Playfair_Display({
   variable: "--font-playfair",
 });
 
+const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || "https://www.hired-cv.com";
+
 export const metadata: Metadata = {
+  metadataBase: new URL(siteUrl),
   title: "Hired - AI Resume Builder & Optimizer",
   description: "Don't just apply. Get Hired. Build a resume that gets you hired with our AI-powered resume builder and optimizer.",
+  openGraph: {
+    title: "Hired - AI Resume Builder & Optimizer",
+    description: "Don't just apply. Get Hired. Build a resume that gets you hired with our AI-powered resume builder and optimizer.",
+    url: siteUrl,
+    siteName: "Hired",
+    type: "website",
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "Hired - AI Resume Builder & Optimizer",
+    description: "Don't just apply. Get Hired. Build a resume that gets you hired with our AI-powered resume builder and optimizer.",
+  },
 };
 
 export default function RootLayout({

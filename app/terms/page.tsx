@@ -31,7 +31,7 @@ export default function TermsOfService() {
             <section>
               <h2 className="text-lg font-bold text-gray-900 mb-3">1. Introduction</h2>
               <p>
-                Welcome to the CV Optimizer, operated by <strong>hired-cv</strong> ("we," "our," or "us") ("the Service"). 
+                Welcome to Hired, operated by <strong>hired-cv.com</strong> ("we," "our," or "us") ("the Service"). 
                 By accessing or using our website and services, you agree to be bound by these Terms of Service. 
                 If you do not agree to these terms, please do not use the Service.
               </p>
