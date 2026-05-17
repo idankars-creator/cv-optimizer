@@ -56,8 +56,21 @@ const config: Config = {
           950: "#1e1b4b",
         },
       },
+      boxShadow: {
+        soft: "0 2px 20px -6px rgba(0, 0, 0, 0.06)",
+        card: "0 4px 40px -12px rgba(0, 0, 0, 0.08)",
+        lift: "0 8px 30px -8px rgba(0, 0, 0, 0.10)",
+        modal: "0 8px 60px -12px rgba(0, 0, 0, 0.25)",
+      },
       animation: {
         "pulse-slow": "pulse 3s cubic-bezier(0.4, 0, 0.6, 1) infinite",
+        "fade-in": "fadeIn 0.25s ease-out both",
+      },
+      keyframes: {
+        fadeIn: {
+          "0%": { opacity: "0" },
+          "100%": { opacity: "1" },
+        },
       },
     },
   },
