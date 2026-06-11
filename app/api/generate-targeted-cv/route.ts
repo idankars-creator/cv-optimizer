@@ -8,6 +8,7 @@ import {
   normalizeRoleCard,
   type GeneratedCardOutput,
 } from "@/lib/multiRole";
+import { extractBalancedJson } from "@/lib/extractJson";
 
 const anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
 
@@ -16,36 +17,6 @@ export const maxDuration = 60;
 
 const MAX_ROLES = 5;
 const DAILY_CEILING = 10; // see plan section J — soft guard against runaway spend
-
-function extractBalancedJson(text: string): string | null {
-  const start = text.indexOf("{");
-  if (start === -1) return null;
-  let depth = 0;
-  let inString = false;
-  let escape = false;
-  for (let i = start; i < text.length; i++) {
-    const c = text[i];
-    if (escape) {
-      escape = false;
-      continue;
-    }
-    if (c === "\\") {
-      escape = true;
-      continue;
-    }
-    if (c === '"') {
-      inString = !inString;
-      continue;
-    }
-    if (inString) continue;
-    if (c === "{") depth++;
-    else if (c === "}") {
-      depth--;
-      if (depth === 0) return text.slice(start, i + 1);
-    }
-  }
-  return null;
-}
 
 async function generateOne(role: string, baseCvText: string): Promise<GeneratedCardOutput> {
   const prompt = buildRolePrompt({ role, baseCvText });
