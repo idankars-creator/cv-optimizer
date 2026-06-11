@@ -1,6 +1,7 @@
 "use client";
 
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
+import { toast } from "sonner";
 import Link from "next/link";
 import { useUser } from "@clerk/nextjs";
 import { 
@@ -79,6 +80,15 @@ export default function BuilderPage() {
     goToStep,
   } = useResumeStore();
   
+  // Honor ?step=N deep links (voice + chat builders hand off to the
+  // Review & Export step with /builder?step=6). Read from window instead of
+  // useSearchParams so the statically-prerendered page needs no Suspense.
+  useEffect(() => {
+    const s = Number(new URLSearchParams(window.location.search).get("step"));
+    if (Number.isInteger(s) && s >= 0 && s < TOTAL_STEPS) goToStep(s);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
   // Preview panel state - default CLOSED to focus on form
   const [isPreviewOpen, setIsPreviewOpen] = useState(false);
   const [selectedTemplate, setSelectedTemplate] = useState<BuilderTemplateId>("ivy-league");
@@ -1114,13 +1124,18 @@ function TextAreaWithLimit({
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ text: value, context }),
       });
-      
+
+      if (response.status === 401) {
+        toast.error("Sign in (free) to use AI writing help");
+        return;
+      }
       if (!response.ok) throw new Error("Failed to optimize");
-      
+
       const { improvedText } = await response.json();
       onChange(improvedText);
     } catch (error) {
       console.error("Optimize error:", error);
+      toast.error("AI improvement failed — try again");
     } finally {
       setIsOptimizing(false);
     }
@@ -1267,18 +1282,23 @@ function ExperienceCard({ experience, index }: { experience: Experience; index: 
       const response = await fetch("/api/optimize-text", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ 
-          text, 
-          context: `job responsibilities and achievements for ${experience.role || "a role"} at ${experience.company || "a company"}` 
+        body: JSON.stringify({
+          text,
+          context: `job responsibilities and achievements for ${experience.role || "a role"} at ${experience.company || "a company"}`
         }),
       });
-      
+
+      if (response.status === 401) {
+        toast.error("Sign in (free) to use AI writing help");
+        return;
+      }
       if (!response.ok) throw new Error("Failed to optimize");
-      
+
       const { improvedText } = await response.json();
       updateExperience(experience.id, { description: improvedText.split("\n").filter(Boolean) });
     } catch (error) {
       console.error("Optimize error:", error);
+      toast.error("AI improvement failed — try again");
     } finally {
       setIsOptimizing(false);
     }
