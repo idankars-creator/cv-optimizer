@@ -1,12 +1,37 @@
 import { NextRequest, NextResponse } from "next/server";
 import Anthropic from "@anthropic-ai/sdk";
+import { auth } from "@clerk/nextjs/server";
+import { extractBalancedJson } from "@/lib/extractJson";
+import { checkRateLimit } from "@/lib/rateLimit";
 
 const anthropic = new Anthropic({
   apiKey: process.env.ANTHROPIC_API_KEY,
 });
 
+const HOURLY_CAP = 10;
+
 export async function POST(request: NextRequest) {
   try {
+    // This route has no anonymous client flow (the public /builder page uses
+    // /api/optimize-text), so require auth — it guards raw Anthropic spend.
+    const { userId } = await auth();
+    if (!userId) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
+    const rl = await checkRateLimit({
+      name: "optimize",
+      id: userId,
+      limit: HOURLY_CAP,
+      windowSeconds: 60 * 60,
+    });
+    if (!rl.ok) {
+      return NextResponse.json(
+        { error: `Limit reached (${HOURLY_CAP}/hour). Please try again soon.` },
+        { status: 429 }
+      );
+    }
+
     const body = await request.json();
 
     // ============================================================
@@ -19,7 +44,7 @@ export async function POST(request: NextRequest) {
       2. Using strong action verbs.
       3. Making it ATS-friendly.
       4. Correcting grammar/spelling.
-      Context: ${context || "resume section"}
+      Context: ${typeof context === "string" && context.trim() ? context.slice(0, 300) : "resume section"}
       IMPORTANT: Return ONLY the improved text.`;
 
       const response = await anthropic.messages.create({
@@ -178,8 +203,29 @@ YOU MUST RESPOND WITH VALID JSON ONLY. NO MARKDOWN, NO EXPLANATIONS. JUST THE JS
         temperature: 0.3, // Very low temperature for consistent, strict scoring
       });
 
-      const content = response.content[0].type === 'text' ? response.content[0].text : '{}';
-      const result = JSON.parse(content);
+      const content = response.content[0].type === 'text' ? response.content[0].text : '';
+
+      // If the model hit max_tokens the JSON is truncated — never parse it.
+      if (response.stop_reason === "max_tokens") {
+        console.error("[optimize] model output truncated at max_tokens");
+        return NextResponse.json(
+          {
+            error: "Your resume is too long for a single pass. Try shortening older roles and try again.",
+            failure_reason: "truncated",
+          },
+          { status: 422 }
+        );
+      }
+
+      const jsonText = extractBalancedJson(content);
+      if (!jsonText) {
+        console.error("[optimize] no JSON object in response. First 500 chars:", content.slice(0, 500));
+        return NextResponse.json(
+          { error: "We couldn't read the AI's response. Please try again.", failure_reason: "parse_error" },
+          { status: 500 }
+        );
+      }
+      const result = JSON.parse(jsonText);
       return NextResponse.json(result);
     }
 
