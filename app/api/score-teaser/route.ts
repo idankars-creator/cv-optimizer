@@ -187,7 +187,7 @@ Return ONLY the JSON object, no markdown, no other text.`;
 
     // Use Claude for better analysis
     const response = await anthropic.messages.create({
-      model: "claude-sonnet-4-6",
+      model: "claude-opus-4-8",
       max_tokens: 400,
       system: systemPrompt,
       messages: [
@@ -196,7 +196,6 @@ Return ONLY the JSON object, no markdown, no other text.`;
           content: analysisPrompt,
         },
       ],
-      temperature: 0.3,
     });
 
     const content = response.content[0].type === 'text' ? response.content[0].text : "";

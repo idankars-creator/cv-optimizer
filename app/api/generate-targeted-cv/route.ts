@@ -21,12 +21,11 @@ const DAILY_CEILING = 10; // see plan section J — soft guard against runaway s
 async function generateOne(role: string, baseCvText: string): Promise<GeneratedCardOutput> {
   const prompt = buildRolePrompt({ role, baseCvText });
   const response = await anthropic.messages.create({
-    model: "claude-sonnet-4-6",
+    model: "claude-opus-4-8",
     max_tokens: 3500,
     system:
       "You rewrite resumes for a target role. Use only facts in the source. Return strict JSON only — no prose, no markdown, no backticks.",
     messages: [{ role: "user", content: prompt }],
-    temperature: 0.4,
   });
   const content = response.content[0]?.type === "text" ? response.content[0].text : "";
   const jsonText = extractBalancedJson(content);

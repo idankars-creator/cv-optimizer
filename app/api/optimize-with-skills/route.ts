@@ -208,8 +208,8 @@ Return a JSON object with this structure:
 Return ONLY valid JSON, no other text.`;
 
     const response = await anthropic.messages.create({
-      model: "claude-sonnet-4-6",
-      max_tokens: 4096,
+      model: "claude-opus-4-8",
+      max_tokens: 8192,
       system: "You are a professional resume writer. You help candidates accurately represent their real experience. You NEVER fabricate or exaggerate. Always respond with valid JSON.",
       messages: [
         {
@@ -217,7 +217,6 @@ Return ONLY valid JSON, no other text.`;
           content: optimizationPrompt,
         },
       ],
-      temperature: 0.5,
     });
 
     const content = response.content[0].type === 'text' ? response.content[0].text : '';

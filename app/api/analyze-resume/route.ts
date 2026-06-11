@@ -81,13 +81,12 @@ Focus your suggestions on:
 - ATS optimization`;
 
     const response = await anthropic.messages.create({
-      model: "claude-sonnet-4-6",
+      model: "claude-opus-4-8",
       max_tokens: 500,
       system: "You are a professional resume analyst. Always respond with valid JSON only.",
       messages: [
         { role: "user", content: prompt },
       ],
-      temperature: 0.7,
     });
 
     const content = response.content[0].type === 'text' ? response.content[0].text : '';

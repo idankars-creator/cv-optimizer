@@ -66,11 +66,10 @@ export async function POST(request: Request) {
   let resumeData;
   try {
     const response = await anthropic.messages.create({
-      model: "claude-sonnet-4-6",
+      model: "claude-opus-4-8",
       max_tokens: 4000,
       system: "Convert spoken career conversations into resume JSON. Use ONLY facts from the transcript — never invent. Return strict JSON only.",
       messages: [{ role: "user", content: buildFinalizePrompt(transcript) }],
-      temperature: 0.2,
     });
     const content = response.content[0]?.type === "text" ? response.content[0].text : "";
     const jsonText = extractBalancedJson(content);

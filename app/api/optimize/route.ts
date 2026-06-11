@@ -48,13 +48,12 @@ export async function POST(request: NextRequest) {
       IMPORTANT: Return ONLY the improved text.`;
 
       const response = await anthropic.messages.create({
-        model: "claude-sonnet-4-6",
+        model: "claude-opus-4-8",
         max_tokens: 1024,
         system: builderSystemPrompt,
         messages: [
           { role: "user", content: text },
         ],
-        temperature: 0.7,
       });
 
       const content = response.content[0].type === 'text' ? response.content[0].text : '';
@@ -194,13 +193,12 @@ YOU MUST RESPOND WITH VALID JSON ONLY. NO MARKDOWN, NO EXPLANATIONS. JUST THE JS
       `;
 
       const response = await anthropic.messages.create({
-        model: "claude-sonnet-4-6",
-        max_tokens: 4096,
+        model: "claude-opus-4-8",
+        max_tokens: 8192,
         system: optimizerSystemPrompt,
         messages: [
           { role: "user", content: userMessage },
         ],
-        temperature: 0.3, // Very low temperature for consistent, strict scoring
       });
 
       const content = response.content[0].type === 'text' ? response.content[0].text : '';

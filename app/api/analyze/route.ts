@@ -897,7 +897,7 @@ IMPORTANT:
 Return ONLY the JSON object.`;
 
     const response = await anthropic.messages.create({
-      model: "claude-sonnet-4-6",
+      model: "claude-opus-4-8",
       max_tokens: 8000,
       system: "You are an executive resume writer who ENHANCES content, not deletes it. Create an AMAZING 3-4 line professional summary. PRESERVE all education details (GPA, honors, coursework). Recent roles: 2 bullets (3 if exceptional), older: 0-1. Transform weak content into strong content. Executive language. NEVER fabricate. Respond with valid JSON only.",
       messages: [
@@ -906,7 +906,6 @@ Return ONLY the JSON object.`;
           content: analysisPrompt,
         },
       ],
-      temperature: 0.5, // Lower for more consistent, truthful output
     });
 
     const content = response.content[0].type === 'text' ? response.content[0].text : "";

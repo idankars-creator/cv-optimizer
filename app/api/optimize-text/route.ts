@@ -62,13 +62,12 @@ IMPORTANT:
 - If it's already good, make minimal changes`;
 
     const response = await anthropic.messages.create({
-      model: "claude-sonnet-4-6",
+      model: "claude-opus-4-8",
       max_tokens: 500,
       system: systemPrompt,
       messages: [
         { role: "user", content: `Improve this text:\n\n${text}` },
       ],
-      temperature: 0.7,
     });
 
     const improvedText = response.content[0].type === 'text' ? response.content[0].text.trim() : '';
