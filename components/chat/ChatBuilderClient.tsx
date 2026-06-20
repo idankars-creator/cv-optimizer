@@ -26,6 +26,7 @@ import { SmartResumePreview } from "@/components/shared/SmartResumePreview";
 import { BuilderTemplateId, ThemeColor } from "@/context/BuilderContext";
 import { track } from "@/lib/analytics";
 import { readSse } from "@/lib/chat/sse";
+import { firstUrl, fetchJobPosting, withJobPosting } from "@/lib/chat/jobUrl";
 import { ChatThread } from "./ChatThread";
 import { ChatComposer } from "./ChatComposer";
 import { BuildProgress } from "./BuildProgress";
@@ -50,6 +51,10 @@ export function ChatBuilderClient() {
   const [uploadingCv, setUploadingCv] = useState(false);
   const [mobileTab, setMobileTab] = useState<"chat" | "preview">("chat");
   const [previewView, setPreviewView] = useState<"guided" | "document">("guided");
+  // Preview is OPT-IN — the build is a conversation first; the user chooses to
+  // open the CV preview (and switch templates) when they want to see it render.
+  const [previewOpen, setPreviewOpen] = useState(false);
+  const [fetchingJob, setFetchingJob] = useState(false);
   const [prefill, setPrefill] = useState("");
   const [prefillNonce, setPrefillNonce] = useState(0);
   const [unseenUpdates, setUnseenUpdates] = useState(0);
@@ -166,6 +171,32 @@ export function ChatBuilderClient() {
     setPrefill(text);
     setPrefillNonce((n) => n + 1);
     track("chat_quick_edit_clicked");
+  }
+
+  // Read a pasted job URL server-side and fold the posting into what the agent
+  // sees; fall back to the raw message if it can't be read.
+  async function handleSend(text: string) {
+    if (streaming || uploadingCv || fetchingJob) return;
+    const url = firstUrl(text);
+    if (!url) {
+      void send(text);
+      return;
+    }
+    setFetchingJob(true);
+    const tid = toast.loading("Reading the job post…");
+    try {
+      const job = await fetchJobPosting(url);
+      toast.dismiss(tid);
+      if (job.ok) {
+        toast.success("Got the job post — tailoring to it now");
+        await send(withJobPosting(text, url, job), text);
+      } else {
+        toast.message(job.error ?? "Couldn't open that link — paste the description and I'll use it.");
+        await send(text);
+      }
+    } finally {
+      setFetchingJob(false);
+    }
   }
 
   async function handleUpload(file: File) {
@@ -307,6 +338,31 @@ export function ChatBuilderClient() {
           </div>
         </div>
         <div className="flex items-center gap-2">
+          <button
+            type="button"
+            onClick={() => {
+              setPreviewOpen((v) => {
+                const next = !v;
+                setMobileTab(next ? "preview" : "chat");
+                if (next) setUnseenUpdates(0);
+                return next;
+              });
+            }}
+            aria-pressed={previewOpen}
+            className={`inline-flex items-center gap-1.5 px-3 py-2 rounded-full border text-xs transition-colors ${
+              previewOpen
+                ? "bg-white text-[#1a1a1a] border-transparent font-medium"
+                : "bg-white/8 border-glass-border text-white/75 hover:bg-white/15 hover:text-white"
+            }`}
+          >
+            <Eye className="h-3.5 w-3.5" />
+            <span className="hidden sm:inline">{previewOpen ? "Hide preview" : "Preview"}</span>
+            {!previewOpen && unseenUpdates > 0 ? (
+              <span className="min-w-[16px] h-[16px] px-1 grid place-items-center rounded-full bg-[#f5b8c8] text-[#1a1a1a] text-[10px] font-bold">
+                {unseenUpdates}
+              </span>
+            ) : null}
+          </button>
           <Link
             href="/build/voice"
             className="hidden md:inline-flex items-center gap-1.5 px-3 py-2 rounded-full bg-white/8 border border-glass-border text-xs text-white/75 hover:bg-white/15 hover:text-white transition-colors"
@@ -333,7 +389,8 @@ export function ChatBuilderClient() {
         </div>
       </header>
 
-      {/* Mobile tab switch */}
+      {/* Mobile tab switch — only when the preview is open */}
+      {previewOpen ? (
       <div className="md:hidden flex-shrink-0 px-4 pb-2">
         <div className="grid grid-cols-2 gap-1 p-1 rounded-2xl bg-white/10 border border-glass-border">
           <button
@@ -366,14 +423,15 @@ export function ChatBuilderClient() {
           </button>
         </div>
       </div>
+      ) : null}
 
       {/* Split body */}
       <div className="flex-1 flex min-h-0 px-4 md:px-6 pb-4 md:pb-6 gap-4">
-        {/* Chat column */}
+        {/* Chat column — fills the width when the preview is closed */}
         <section
-          className={`flex-col min-h-0 w-full md:w-[44%] md:max-w-[560px] md:flex ${
-            mobileTab === "chat" ? "flex" : "hidden"
-          }`}
+          className={`flex-col min-h-0 w-full md:flex ${
+            previewOpen ? "md:w-[44%] md:max-w-[560px]" : "md:max-w-[760px] md:mx-auto"
+          } ${mobileTab === "chat" ? "flex" : "hidden"}`}
         >
           <div className="flex flex-col min-h-0 flex-1 rounded-3xl bg-glass border border-glass-border backdrop-blur-glass shadow-glow overflow-hidden">
             <div className="flex-shrink-0 px-4 pt-4 pb-3 border-b border-glass-border">
@@ -387,10 +445,11 @@ export function ChatBuilderClient() {
             />
             <div className="flex-shrink-0 px-3 pb-3 pt-1">
               <ChatComposer
-                onSend={send}
+                onSend={handleSend}
                 onUpload={handleUpload}
                 uploading={uploadingCv}
-                disabled={streaming || uploadingCv}
+                disabled={streaming || uploadingCv || fetchingJob}
+                placeholder="Reply, paste a job link, or tap 📎 to upload"
                 prefill={prefill}
                 prefillNonce={prefillNonce}
               />
@@ -398,7 +457,8 @@ export function ChatBuilderClient() {
           </div>
         </section>
 
-        {/* Preview column */}
+        {/* Preview column — opt-in (hidden until the user clicks Preview) */}
+        {previewOpen ? (
         <section
           className={`flex-1 min-h-0 min-w-0 md:flex ${
             mobileTab === "preview" ? "flex" : "hidden"
@@ -462,6 +522,7 @@ export function ChatBuilderClient() {
             )}
           </div>
         </section>
+        ) : null}
       </div>
     </div>
   );
