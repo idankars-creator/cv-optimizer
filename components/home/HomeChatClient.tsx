@@ -486,7 +486,9 @@ export function HomeChatClient() {
         }}
         className="flex-1 min-h-0 overflow-y-auto py-4"
       >
-        <div className="flex flex-col gap-4">
+        {/* Mask transcript (resume PII) in Clarity replays; behavior still
+            captured via home_chat_* events + UI chrome. */}
+        <div className="flex flex-col gap-4" data-clarity-mask="true">
           {messages.map((m) =>
             m.role === "user" ? (
               <div key={m.id} className="flex justify-end">
