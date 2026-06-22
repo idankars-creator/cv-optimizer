@@ -59,7 +59,13 @@ export type BuilderTemplateId =
   | "techie"           // 5. Developer-optimized
   | "creative"         // 6. Unique split design
   | "startup"          // 7. Modern, punchy
-  | "international";   // 8. Photo support, standardized
+  | "international"    // 8. Photo support, standardized
+  | "aurora"           // 9. Accent rail + tinted header (bold/colorful)
+  | "banner"           // 10. Full-width color banner
+  | "spotlight"        // 11. Centered minimal, ATS-safe
+  | "ledger"           // 12. Editorial serif, date rail
+  | "devfolio"         // 13. Developer / mono
+  | "canvas";          // 14. Creative accent sidebar
 
 export interface BuilderContextState {
   // Active field tracking

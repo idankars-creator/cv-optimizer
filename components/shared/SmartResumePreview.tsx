@@ -24,6 +24,12 @@ const TEMPLATE_OPTIONS: { id: BuilderTemplateId; name: string }[] = [
   { id: "creative", name: "Creative" },
   { id: "startup", name: "Startup" },
   { id: "international", name: "International" },
+  { id: "aurora", name: "Aurora" },
+  { id: "banner", name: "Banner" },
+  { id: "spotlight", name: "Spotlight" },
+  { id: "ledger", name: "Ledger" },
+  { id: "devfolio", name: "Devfolio" },
+  { id: "canvas", name: "Canvas" },
 ];
 
 // Color options
