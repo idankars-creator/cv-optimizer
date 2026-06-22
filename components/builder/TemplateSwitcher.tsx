@@ -100,6 +100,48 @@ export const TEMPLATE_OPTIONS: TemplateOption[] = [
     preview: "linear-gradient(135deg, #f1f5f9 30%, #ffffff 30%)",
     category: "professional",
   },
+  {
+    id: "aurora",
+    name: "Aurora",
+    description: "Accent rail, tinted header",
+    preview: "linear-gradient(90deg, #6366f1 7%, #eef2ff 7%, #ffffff 60%)",
+    category: "professional",
+  },
+  {
+    id: "banner",
+    name: "Banner",
+    description: "Full-width color banner",
+    preview: "linear-gradient(180deg, #4f46e5 28%, #ffffff 28%)",
+    category: "professional",
+  },
+  {
+    id: "spotlight",
+    name: "Spotlight",
+    description: "Centered, ATS-safe",
+    preview: "linear-gradient(180deg, #ffffff 0%, #eef2ff 100%)",
+    category: "professional",
+  },
+  {
+    id: "ledger",
+    name: "Ledger",
+    description: "Editorial serif, date rail",
+    preview: "linear-gradient(180deg, #fbf6ec 0%, #f3ece0 100%)",
+    category: "classic",
+  },
+  {
+    id: "devfolio",
+    name: "Devfolio",
+    description: "Developer / mono style",
+    preview: "linear-gradient(180deg, #0f172a 7%, #ffffff 7%)",
+    category: "technical",
+  },
+  {
+    id: "canvas",
+    name: "Canvas",
+    description: "Creative accent sidebar",
+    preview: "linear-gradient(120deg, #6366f1 34%, #ffffff 34%)",
+    category: "creative",
+  },
 ];
 
 // Color swatches - Updated for Indigo/Violet rebrand

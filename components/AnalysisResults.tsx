@@ -129,6 +129,12 @@ const TEMPLATE_OPTIONS: { id: BuilderTemplateId; name: string; icon: string; pre
   { id: "creative", name: "Creative", icon: "◨", preview: "Split design" },
   { id: "startup", name: "Startup", icon: "◆", preview: "Modern punchy" },
   { id: "international", name: "Intl", icon: "🌐", preview: "Photo support" },
+  { id: "aurora", name: "Aurora", icon: "▮", preview: "Accent rail" },
+  { id: "banner", name: "Banner", icon: "▀", preview: "Color banner" },
+  { id: "spotlight", name: "Spotlight", icon: "◇", preview: "Centered, ATS" },
+  { id: "ledger", name: "Ledger", icon: "❡", preview: "Editorial serif" },
+  { id: "devfolio", name: "Devfolio", icon: "⌗", preview: "Dev / mono" },
+  { id: "canvas", name: "Canvas", icon: "◐", preview: "Creative sidebar" },
 ];
 
 export function AnalysisResults({ results, coverLetterTab, onEnhanceWithDeepDive, isEnhancing, jobTitle, onTabChange }: AnalysisResultsProps) {
