@@ -28,6 +28,7 @@ import {
   FileUp,
   Loader2,
   MessageSquareText,
+  Mic,
   PencilLine,
   Sparkles,
 } from "lucide-react";
@@ -704,6 +705,24 @@ export function BuildOnboarding({ embedded = false }: { embedded?: boolean } = {
                   desc={translate("Chat with your coach — it writes each section as you talk.")}
                   badge={translate("Recommended")}
                   onClick={() => finish("chat", "/build/chat", translate("Putting your first draft together…"))}
+                />
+                <MethodCard
+                  icon={<Mic className="h-5 w-5" strokeWidth={1.75} />}
+                  title={translate("Talk it out")}
+                  desc={translate("Have a real voice conversation — it builds your CV as you speak.")}
+                  badge={translate("New")}
+                  onClick={() => {
+                    seedRole();
+                    track("build_onboarding_completed", {
+                      method: "voice",
+                      role: primaryRole || null,
+                      roles: rolesLabel || null,
+                      goal,
+                      experience,
+                      template,
+                    });
+                    router.push("/build/voice");
+                  }}
                 />
                 <MethodCard
                   icon={<PencilLine className="h-5 w-5" strokeWidth={1.75} />}
