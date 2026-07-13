@@ -330,8 +330,17 @@ export function StudioBuilder() {
           throw new Error(evt.error);
         }
       });
-      if (toolCount === 0 && !useChatBuilderStore.getState().messages.find((m) => m.id === assistantId)?.content) {
-        updateMessage(assistantId, { content: t("Hmm, I lost my train of thought — say that again?") });
+      // Never leave the assistant turn with empty content — a settled empty
+      // bubble reads as "stuck". A tool-applying turn (e.g. importing an
+      // uploaded CV) frequently ends with tool calls but no closing text, so
+      // give it a real closing that acknowledges the change and moves forward.
+      if (!useChatBuilderStore.getState().messages.find((m) => m.id === assistantId)?.content) {
+        updateMessage(assistantId, {
+          content:
+            toolCount > 0
+              ? t("Done — your CV's updated in the preview. Want me to tailor it to a specific role? Tell me the job or paste a link and I'll sharpen it.")
+              : t("Hmm, I lost my train of thought — say that again?"),
+        });
       }
     } catch (err) {
       if ((err as Error)?.name !== "AbortError") {

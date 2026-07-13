@@ -220,6 +220,10 @@ const core: Record<string, string> = {
   "Civil Engineer": "מהנדס/ת אזרחי/ת",
   "Mechanical Engineer": "מהנדס/ת מכונות",
   "Electrical Engineer": "מהנדס/ת חשמל",
+
+  // ── Chat builder closings ───────────────────────────────────────────────────
+  "Done — your CV's updated in the preview. Want me to tailor it to a specific role? Tell me the job or paste a link and I'll sharpen it.":
+    "סיימתי — קורות החיים עודכנו בתצוגה המקדימה. רוצה שאתאים אותם לתפקיד מסוים? ספר/י לי על המשרה או הדבק/י קישור ואחדד אותם.",
 };
 
 // Final dictionary: bulk auto-generated translations first, curated core last so
