@@ -1,0 +1,73 @@
+name: Deploy sync (upstream main -> deploy fork)
+
+# WHY THIS EXISTS
+# ---------------
+# hiredcv.app (Vercel project "cv-optimizer") builds from the DEPLOY FORK
+# idankars-creator/cv-optimizer @ main — NOT from this repo
+# (berenblutnatan-cyber/cv-optimizer). PRs merge HERE, but nothing reaches
+# production until the fork's main is fast-forwarded to match this repo's main.
+#
+# That manual sync step was missed for ~3 weeks once, silently stalling six
+# already-merged PRs (#83–#88) — the app looked "unchanged" in prod even though
+# everything was merged. This job automates the fast-forward so a merge here
+# deploys within minutes, with no human in the loop.
+#
+# SAFETY
+# ------
+# - Runs ONLY inside the deploy fork (guarded by `github.repository`). In the
+#   upstream repo the job is skipped, so it is harmless to keep the file here.
+# - Fast-forward ONLY. It never force-pushes: if the fork's main has diverged
+#   from upstream (someone committed directly to the fork), it fails loudly and
+#   leaves prod untouched instead of clobbering that work.
+# - Pushes with the fork's GITHUB_TOKEN (contents: write). Vercel's GitHub App
+#   receives the push webhook and deploys; no extra secret/PAT is required.
+
+on:
+  schedule:
+    - cron: "*/10 * * * *" # every ~10 min (GitHub cron is best-effort)
+  workflow_dispatch: {} # manual "sync now"
+
+permissions:
+  contents: write
+
+concurrency:
+  group: deploy-sync
+  cancel-in-progress: false
+
+jobs:
+  sync:
+    # Only meaningful in the deploy fork. A no-op skip in the upstream repo.
+    if: github.repository == 'idankars-creator/cv-optimizer'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: main
+          fetch-depth: 0
+          persist-credentials: true
+
+      - name: Fast-forward fork main to upstream main
+        run: |
+          set -euo pipefail
+          git config user.name "deploy-sync-bot"
+          git config user.email "deploy-sync-bot@users.noreply.github.com"
+          git remote add upstream https://github.com/berenblutnatan-cyber/cv-optimizer.git
+          git fetch --no-tags upstream main
+
+          LOCAL="$(git rev-parse HEAD)"
+          UPSTREAM="$(git rev-parse upstream/main)"
+
+          if [ "$LOCAL" = "$UPSTREAM" ]; then
+            echo "Fork already at $LOCAL — nothing to deploy."
+            exit 0
+          fi
+
+          if git merge-base --is-ancestor "$LOCAL" "$UPSTREAM"; then
+            echo "Fast-forwarding fork main: $LOCAL -> $UPSTREAM"
+            git merge --ff-only "$UPSTREAM"
+            git push origin HEAD:main
+            echo "Pushed to fork main — Vercel will deploy."
+          else
+            echo "::error::Fork main ($LOCAL) is not an ancestor of upstream main ($UPSTREAM); refusing to force-push. Reconcile the fork manually."
+            exit 1
+          fi
