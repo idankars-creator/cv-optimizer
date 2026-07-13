@@ -93,6 +93,7 @@ export type EventName =
   | "build_onboarding_completed"
   | "build_onboarding_path"
   | "build_onboarding_score_click"
+  | "build_onboarding_resume_draft"
   // Live Resume Score panel (Enhancv-style content-intelligence sidebar)
   | "score_panel_opened"
   | "score_panel_closed"

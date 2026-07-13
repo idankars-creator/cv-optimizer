@@ -25,7 +25,7 @@ import {
 import { toast } from "sonner";
 import { Logo } from "@/components/Logo";
 import { useResumeStore } from "@/store/useResumeStore";
-import { useChatBuilderStore } from "@/stores/chatBuilderStore";
+import { useChatBuilderStore, CHAT_ACTIVE_SESSION_KEY } from "@/stores/chatBuilderStore";
 import { useFlashSaleStore } from "@/stores/flashSaleStore";
 import { applyCvToolCall, pendingToolLabel } from "@/lib/chat/cvTools";
 import { chatGreeting, cvUploadIntake, isPlaceholderSummary } from "@/lib/chat/prompts";
@@ -49,7 +49,7 @@ import { InlineCvEditor } from "@/components/chat/InlineCvEditor";
 import { useT } from "@/lib/i18n/LanguageProvider";
 
 type ChatListItem = { id: string; title: string; updatedAt: string; messageCount: number };
-const ACTIVE_KEY = "chat-active-session-id";
+const ACTIVE_KEY = CHAT_ACTIVE_SESSION_KEY;
 
 /**
  * StudioBuilder — the single, unified CV builder.

@@ -168,6 +168,58 @@ const core: Record<string, string> = {
     "קיבלתי — זה נקלט. עכשיו הדביקו את המשרה שאתם מכוונים אליה (או את הכותרת שלה) ואני אדרג את ההתאמה שלכם. או אמרו \"פשוט תדרג\" לסקירה כללית.",
   "Got your CV. Now paste the job post you're targeting (or its title) — or say \"just score it\" for a general review.":
     "קיבלתי את קורות החיים שלכם. עכשיו הדביקו את המשרה שאתם מכוונים אליה (או את הכותרת שלה) — או אמרו \"פשוט תדרג\" לסקירה כללית.",
+
+  // ── Build onboarding: single start question + role dropdown + fresh start ──
+  "How would you like to build it?": "איך תרצו לבנות אותם?",
+  "Already have a CV? Upload it and skip the questions — otherwise pick how we work together.":
+    "כבר יש לכם קורות חיים? העלו אותם ודלגו על השאלות — אחרת בחרו איך נעבוד יחד.",
+  "Chat with your coach": "שוחחו עם המאמן",
+  "Answer a few quick questions — it writes each section as you talk.":
+    "ענו על כמה שאלות קצרות — הוא כותב כל חלק תוך כדי שיחה.",
+  "Talk it out": "דברו את זה",
+  "Have a real voice conversation — it builds your CV as you speak.":
+    "נהלו שיחה קולית אמיתית — קורות החיים נבנים בזמן שאתם מדברים.",
+  "Pick from the list or type your own — add more than one if you’re weighing options. Not sure yet? Just continue.":
+    "בחרו מהרשימה או הקלידו בעצמכם — אפשר להוסיף יותר מתפקיד אחד אם אתם מתלבטים. עדיין לא בטוחים? פשוט המשיכו.",
+  "Show role suggestions": "הצגת הצעות לתפקידים",
+  "Common roles": "תפקידים נפוצים",
+  "Continue where you left off": "המשיכו מאיפה שהפסקתם",
+  "Create my first draft": "צרו את הטיוטה הראשונה שלי",
+  "Getting your voice coach ready…": "מכינים את המאמן הקולי שלכם…",
+
+  // ── Role dropdown options ───────────────────────────────────────────────────
+  "Frontend Developer": "מפתח/ת פרונטאנד",
+  "Backend Developer": "מפתח/ת בקאנד",
+  "Full-Stack Developer": "מפתח/ת פול-סטאק",
+  "Mobile Developer": "מפתח/ת מובייל",
+  "DevOps Engineer": "מהנדס/ת DevOps",
+  "QA Engineer": "מהנדס/ת QA",
+  "Data Scientist": "מדען/ית נתונים",
+  "Data Engineer": "מהנדס/ת נתונים",
+  "Machine Learning Engineer": "מהנדס/ת למידת מכונה",
+  "Program Manager": "מנהל/ת תוכנית",
+  "Business Analyst": "אנליסט/ית עסקי/ת",
+  "UX/UI Designer": "מעצב/ת UX/UI",
+  "Graphic Designer": "מעצב/ת גרפי/ת",
+  "Digital Marketing Specialist": "מומחה/ית שיווק דיגיטלי",
+  "Content Writer": "כותב/ת תוכן",
+  "Sales Manager": "מנהל/ת מכירות",
+  "Account Executive": "מנהל/ת לקוחות",
+  "Customer Success Manager": "מנהל/ת הצלחת לקוח",
+  "HR Manager": "מנהל/ת משאבי אנוש",
+  Recruiter: "מגייס/ת",
+  "Financial Analyst": "אנליסט/ית פיננסי/ת",
+  Accountant: "רואה/ת חשבון",
+  "Operations Manager": "מנהל/ת תפעול",
+  "Office Manager": "מנהל/ת משרד",
+  "Executive Assistant": "עוזר/ת אישי/ת בכיר/ה",
+  "Customer Support Representative": "נציג/ת תמיכת לקוחות",
+  Teacher: "מורה",
+  Nurse: "אח/ות",
+  Lawyer: "עורך/ת דין",
+  "Civil Engineer": "מהנדס/ת אזרחי/ת",
+  "Mechanical Engineer": "מהנדס/ת מכונות",
+  "Electrical Engineer": "מהנדס/ת חשמל",
 };
 
 // Final dictionary: bulk auto-generated translations first, curated core last so
