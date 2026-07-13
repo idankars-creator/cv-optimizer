@@ -9,12 +9,18 @@
  * empty form — we greet them, learn the role + experience, and seed a first
  * draft so the builder opens already pointed at the job they want.
  *
- * Handoffs are real, not decorative:
- *  - "Answer a few questions" seeds personalInfo.title with the target role in
- *    the persisted resume store, then opens /build/chat.
- *  - "I have a CV"            stashes the file on the onboarding store, then
- *    opens the optimizer.
- *  - "Blank template"         seeds the role and opens the step-by-step builder.
+ * Shape of the funnel (each thing is asked exactly ONCE):
+ *  - start:    "How would you like to build it?" — upload / chat / voice /
+ *              blank template. Upload skips the questions (the CV has the
+ *              answers); the other three remember the choice and continue.
+ *  - questions: role (optional, with a dropdown) → goal → experience →
+ *              template, then hand off straight to the method chosen up front.
+ *
+ * Handoffs are real, not decorative — and every completed funnel run starts a
+ * FRESH draft (clears the persisted chat transcript + CV + active session), so
+ * "I started a new process" never resurrects the previous one. People who DO
+ * want their old draft get an explicit "Continue where you left off" link on
+ * the intro instead.
  */
 
 import { useEffect, useRef, useState } from "react";
@@ -25,6 +31,7 @@ import {
   ArrowLeft,
   ArrowRight,
   BarChart3,
+  ChevronDown,
   FileUp,
   Loader2,
   MessageSquareText,
@@ -37,19 +44,54 @@ import { useT } from "@/lib/i18n/LanguageProvider";
 import { Logo } from "@/components/Logo";
 import { useResumeStore } from "@/store/useResumeStore";
 import { useOnboardingStore } from "@/stores/onboardingStore";
+import { useChatBuilderStore, CHAT_ACTIVE_SESSION_KEY } from "@/stores/chatBuilderStore";
 import { track } from "@/lib/analytics";
 import type { BuilderTemplateId } from "@/context/BuilderContext";
 
-type Step = "intro" | "path" | "upload" | "role" | "goal" | "reassurance" | "experience" | "template" | "method" | "handoff";
+type Step = "intro" | "start" | "upload" | "role" | "goal" | "reassurance" | "experience" | "template" | "handoff";
 type GoalId = "ats" | "recruiter" | "both";
+type Method = "chat" | "voice" | "manual";
 
-const ROLE_SUGGESTIONS = [
+// Dropdown options for the role question. Free text is always allowed — this
+// list just saves typing for the most common titles.
+const ROLE_OPTIONS = [
   "Software Engineer",
-  "Product Manager",
+  "Frontend Developer",
+  "Backend Developer",
+  "Full-Stack Developer",
+  "Mobile Developer",
+  "DevOps Engineer",
+  "QA Engineer",
   "Data Analyst",
-  "Marketing Manager",
-  "Designer",
+  "Data Scientist",
+  "Data Engineer",
+  "Machine Learning Engineer",
+  "Product Manager",
   "Project Manager",
+  "Program Manager",
+  "Business Analyst",
+  "UX/UI Designer",
+  "Graphic Designer",
+  "Marketing Manager",
+  "Digital Marketing Specialist",
+  "Content Writer",
+  "Sales Manager",
+  "Account Executive",
+  "Customer Success Manager",
+  "HR Manager",
+  "Recruiter",
+  "Financial Analyst",
+  "Accountant",
+  "Operations Manager",
+  "Office Manager",
+  "Executive Assistant",
+  "Customer Support Representative",
+  "Teacher",
+  "Nurse",
+  "Lawyer",
+  "Civil Engineer",
+  "Mechanical Engineer",
+  "Electrical Engineer",
 ];
 
 const GOAL_OPTIONS: { id: GoalId; title: string; desc: string; badge?: string }[] = [
@@ -73,8 +115,15 @@ const TEMPLATE_OPTIONS: { id: BuilderTemplateId; name: string; tag: string }[] =
   { id: "creative", name: "Creative", tag: "Design" },
 ];
 
-// Order matters: drives the slim progress bar (intro/reassurance/handoff are beats).
-const QUESTION_STEPS: Step[] = ["role", "goal", "experience", "template", "method"];
+// Where each start-choice lands, and what the handoff beat says while we go.
+const METHODS: Record<Method, { destination: string; label: string }> = {
+  chat: { destination: "/build/chat", label: "Putting your first draft together…" },
+  voice: { destination: "/build/voice", label: "Getting your voice coach ready…" },
+  manual: { destination: "/builder", label: "Opening your builder…" },
+};
+
+// Order matters: drives the slim progress bar (intro/start/reassurance/handoff are beats).
+const QUESTION_STEPS: Step[] = ["role", "goal", "experience", "template"];
 
 export function BuildOnboarding({ embedded = false }: { embedded?: boolean } = {}) {
   const router = useRouter();
@@ -83,19 +132,41 @@ export function BuildOnboarding({ embedded = false }: { embedded?: boolean } = {
   const fileRef = useRef<HTMLInputElement>(null);
 
   const [step, setStep] = useState<Step>("intro");
+  // How they chose to build at the start — decides the final handoff, so the
+  // funnel never has to ask "how would you like to start?" a second time.
+  const [method, setMethod] = useState<Method>("chat");
   // Target roles — plural: people often apply for more than one title, and the
-  // step is skippable, so this can also be empty.
+  // step is optional, so this can also be empty.
   const [roles, setRoles] = useState<string[]>([]);
   const [roleInput, setRoleInput] = useState("");
+  const [roleOpen, setRoleOpen] = useState(false);
+  const [roleHighlight, setRoleHighlight] = useState(-1);
   const [goal, setGoal] = useState<GoalId | null>(null);
   const [experience, setExperience] = useState<string | null>(null);
   const [template, setTemplate] = useState<BuilderTemplateId>("ivy-league");
   const [handoffLabel, setHandoffLabel] = useState(translate("Putting your first draft together…"));
   const [uploading, setUploading] = useState(false);
   const [dragging, setDragging] = useState(false);
+  // True when a previous (persisted) draft exists on this device — shows the
+  // "Continue where you left off" escape hatch, since finishing the funnel
+  // deliberately starts fresh.
+  const [hasDraft, setHasDraft] = useState(false);
 
   useEffect(() => {
     track("build_onboarding_viewed");
+    // Read AFTER mount: the stores rehydrate from localStorage on the client,
+    // and reading them during render would mismatch the SSR markup.
+    try {
+      const msgs = useChatBuilderStore.getState().messages;
+      const cv = useResumeStore.getState().resumeData;
+      setHasDraft(
+        msgs.some((m) => m.role === "user") ||
+          Boolean(cv.personalInfo.name.trim()) ||
+          cv.experience.length > 0,
+      );
+    } catch {
+      /* ignore — the link just doesn't show */
+    }
   }, []);
 
   const progress =
@@ -111,7 +182,16 @@ export function BuildOnboarding({ embedded = false }: { embedded?: boolean } = {
   const primaryRole = roles[0] ?? "";
   const rolesLabel = roles.join(", ");
 
-  /** Add a typed/suggested role (deduped, capped) without leaving the step. */
+  // Dropdown list for the role combobox: filter by what's typed, hide what's
+  // already added.
+  const roleQuery = roleInput.trim().toLowerCase();
+  const roleMatches = ROLE_OPTIONS.filter(
+    (o) =>
+      !roles.some((r) => r.toLowerCase() === o.toLowerCase()) &&
+      (!roleQuery || o.toLowerCase().includes(roleQuery)),
+  );
+
+  /** Add a typed/selected role (deduped, capped) without leaving the step. */
   function addRole(value: string) {
     const v = value.trim();
     if (!v) return;
@@ -121,22 +201,23 @@ export function BuildOnboarding({ embedded = false }: { embedded?: boolean } = {
         : [...prev, v],
     );
     setRoleInput("");
+    setRoleHighlight(-1);
   }
 
   function removeRole(value: string) {
     setRoles((prev) => prev.filter((r) => r !== value));
   }
 
-  /** Continue from the role step — commit whatever's typed but not yet added. */
+  /** Continue from the role step — commit whatever's typed but not yet added.
+   * Always proceeds: the role question is optional, never a gate. */
   function commitRolesAndContinue() {
     const pending = roleInput.trim();
-    const hasPending =
-      !!pending && !roles.some((r) => r.toLowerCase() === pending.toLowerCase()) && roles.length < 5;
-    if (hasPending) {
+    if (pending && !roles.some((r) => r.toLowerCase() === pending.toLowerCase()) && roles.length < 5) {
       setRoles((prev) => [...prev, pending]);
       setRoleInput("");
     }
-    if (roles.length || hasPending) go("goal");
+    setRoleOpen(false);
+    go("goal");
   }
 
   /** Seed the real stores so the next surface opens already personalised. */
@@ -144,6 +225,24 @@ export function BuildOnboarding({ embedded = false }: { embedded?: boolean } = {
     if (!roles.length) return;
     useResumeStore.getState().updatePersonalInfo({ title: roles[0] });
     useOnboardingStore.getState().setRoles(roles);
+  }
+
+  /**
+   * Completing the funnel means "I'm starting a new CV" — drop the persisted
+   * previous process (chat transcript, CV draft, active chat session) so the
+   * builder opens fresh instead of resurrecting the old one. The old session
+   * stays reachable from chat History for signed-in users; anyone who wanted
+   * the old draft has the explicit "Continue where you left off" link instead.
+   */
+  function startFreshDraft() {
+    useChatBuilderStore.getState().clear();
+    useResumeStore.getState().resetResume();
+    useOnboardingStore.getState().clear();
+    try {
+      localStorage.removeItem(CHAT_ACTIVE_SESSION_KEY);
+    } catch {
+      /* ignore */
+    }
   }
 
   /** Stash the funnel result so the (anonymous) builder drafts the CV at once. */
@@ -158,13 +257,16 @@ export function BuildOnboarding({ embedded = false }: { embedded?: boolean } = {
     }
   }
 
-  function finish(method: "chat" | "manual", destination: string, label: string) {
+  /** Hand off to the method chosen at the start — fresh draft, seeded stores. */
+  function finish(m: Method = method) {
+    startFreshDraft();
     seedRole();
-    track("build_onboarding_completed", { method, role: primaryRole || null, roles: rolesLabel || null, goal, experience, template });
-    // Build-first, sign up to save: the chat builder is anonymous now, so we
-    // hand off straight in and let it draft from what we learned.
-    if (method === "chat") stashKickoff(null);
-    setHandoffLabel(label);
+    track("build_onboarding_completed", { method: m, role: primaryRole || null, roles: rolesLabel || null, goal, experience, template });
+    // Build-first, sign up to save: the builder is anonymous now, so we hand
+    // off straight in and let it draft from what we learned.
+    stashKickoff(null);
+    const { destination, label } = METHODS[m];
+    setHandoffLabel(translate(label));
     go("handoff");
     const delay = reduce ? 150 : 1100;
     window.setTimeout(() => router.push(destination), delay);
@@ -183,6 +285,7 @@ export function BuildOnboarding({ embedded = false }: { embedded?: boolean } = {
       if (!res.ok || !data?.text) {
         throw new Error(data?.error ?? translate("Couldn't read that file — try a PDF or DOCX."));
       }
+      startFreshDraft();
       seedRole();
       useOnboardingStore.getState().setCv(data.fileName, data.text);
       stashKickoff(null);
@@ -303,7 +406,7 @@ export function BuildOnboarding({ embedded = false }: { embedded?: boolean } = {
               </p>
               <div className="mt-9 flex flex-col items-center gap-3 sm:flex-row">
                 <button
-                  onClick={() => go("path")}
+                  onClick={() => go("start")}
                   className="group inline-flex items-center gap-2.5 rounded-full bg-[#D4A83F] px-8 py-4 text-base font-semibold text-[#0A2647] shadow-sm transition-all hover:-translate-y-0.5 hover:shadow-md focus-visible:outline-none"
                 >
                   {translate("Build / Optimize my CV")}
@@ -320,28 +423,33 @@ export function BuildOnboarding({ embedded = false }: { embedded?: boolean } = {
                   {translate("Check my CV score")}
                 </button>
               </div>
+              {/* Escape hatch: finishing the funnel starts a FRESH draft, so a
+                  previous one on this device gets an explicit way back in. */}
+              {hasDraft && (
+                <button
+                  onClick={() => {
+                    track("build_onboarding_resume_draft");
+                    router.push("/build/chat");
+                  }}
+                  className="group mt-6 inline-flex items-center gap-1.5 text-sm font-medium text-[#0A2647]/55 underline-offset-4 transition-colors hover:text-[#0A2647] hover:underline focus-visible:outline-none"
+                >
+                  {translate("Continue where you left off")}
+                  <ArrowRight className="h-3.5 w-3.5 transition-transform group-hover:translate-x-0.5" strokeWidth={1.75} />
+                </button>
+              )}
             </motion.div>
           )}
 
-          {/* ---------- FORK: SCRATCH vs EXISTING ---------- */}
-          {step === "path" && (
-            <motion.div key="path" {...fade} className="w-full">
+          {/* ---------- START: THE ONE "HOW" QUESTION ---------- */}
+          {step === "start" && (
+            <motion.div key="start" {...fade} className="w-full">
               <h2 className="mt-4 text-balance font-serif text-3xl text-[#0A2647] sm:text-4xl md:text-5xl">
-                {translate("Building from scratch, or improving one you have?")}
+                {translate("How would you like to build it?")}
               </h2>
               <p className="mx-auto mt-3 max-w-md text-[#0A2647]/55">
-                {translate("Either way, we’ll tailor it to the role you’re going after.")}
+                {translate("Already have a CV? Upload it and skip the questions — otherwise pick how we work together.")}
               </p>
               <div className="mx-auto mt-8 grid w-full max-w-md gap-3">
-                <MethodCard
-                  icon={<PencilLine className="h-5 w-5" strokeWidth={1.75} />}
-                  title={translate("Build from scratch")}
-                  desc={translate("No CV yet — we’ll build it with you, section by section.")}
-                  onClick={() => {
-                    track("build_onboarding_path", { path: "scratch" });
-                    go("role");
-                  }}
-                />
                 <MethodCard
                   icon={<FileUp className="h-5 w-5" strokeWidth={1.75} />}
                   title={translate("I have an existing CV")}
@@ -351,6 +459,38 @@ export function BuildOnboarding({ embedded = false }: { embedded?: boolean } = {
                     // Already have a CV? Skip the questions — the CV has the
                     // answers. Go straight to upload and optimize.
                     go("upload");
+                  }}
+                />
+                <MethodCard
+                  icon={<MessageSquareText className="h-5 w-5" strokeWidth={1.75} />}
+                  title={translate("Chat with your coach")}
+                  desc={translate("Answer a few quick questions — it writes each section as you talk.")}
+                  badge={translate("Recommended")}
+                  onClick={() => {
+                    track("build_onboarding_path", { path: "chat" });
+                    setMethod("chat");
+                    go("role");
+                  }}
+                />
+                <MethodCard
+                  icon={<Mic className="h-5 w-5" strokeWidth={1.75} />}
+                  title={translate("Talk it out")}
+                  desc={translate("Have a real voice conversation — it builds your CV as you speak.")}
+                  badge={translate("New")}
+                  onClick={() => {
+                    track("build_onboarding_path", { path: "voice" });
+                    setMethod("voice");
+                    go("role");
+                  }}
+                />
+                <MethodCard
+                  icon={<PencilLine className="h-5 w-5" strokeWidth={1.75} />}
+                  title={translate("Start from a blank template")}
+                  desc={translate("Fill it in yourself, step by step.")}
+                  onClick={() => {
+                    track("build_onboarding_path", { path: "manual" });
+                    setMethod("manual");
+                    go("role");
                   }}
                 />
               </div>
@@ -416,25 +556,25 @@ export function BuildOnboarding({ embedded = false }: { embedded?: boolean } = {
                 <span className="text-base font-medium text-[#0A2647]">
                   {uploading ? translate("Reading your CV…") : translate("Drop your CV here, or click to browse")}
                 </span>
-                <span className="text-xs text-[#0A2647]/45">{translate("PDF or DOCX, up to 5 MB")}</span>
+                <span className="text-xs text-[#0A2647]/45">{translate("PDF or DOCX, up to 5 MB")}</span>
               </div>
               <div className="mt-6">
                 <button
                   type="button"
                   disabled={uploading}
-                  onClick={() => finish("chat", "/build/chat", translate("Putting your first draft together…"))}
+                  onClick={() => finish("chat")}
                   className="text-sm font-medium text-[#0A2647]/55 underline-offset-4 transition-colors hover:text-[#0A2647] hover:underline disabled:opacity-40 focus-visible:outline-none"
                 >
                   {translate("I don’t have it handy — build with the coach instead")}
                 </button>
               </div>
               <div className="mt-6 flex justify-center">
-                <BackButton onClick={() => go("path")} />
+                <BackButton onClick={() => go("start")} />
               </div>
             </motion.div>
           )}
 
-          {/* ---------- Q1: ROLE (optional, multi) ---------- */}
+          {/* ---------- Q1: ROLE (optional, multi, dropdown) ---------- */}
           {step === "role" && (
             <motion.div key="role" {...fade} className="w-full">
               <StepLabel step="role" />
@@ -442,7 +582,7 @@ export function BuildOnboarding({ embedded = false }: { embedded?: boolean } = {
                 {translate("What role are you going after?")}
               </h2>
               <p className="mx-auto mt-3 max-w-md text-[#0A2647]/55">
-                {translate("Add one or more — we’ll tailor your CV to them. Not sure yet? You can skip this.")}
+                {translate("Pick from the list or type your own — add more than one if you’re weighing options. Not sure yet? Just continue.")}
               </p>
               <form
                 onSubmit={(e) => {
@@ -451,31 +591,117 @@ export function BuildOnboarding({ embedded = false }: { embedded?: boolean } = {
                 }}
                 className="mx-auto mt-8 w-full max-w-md"
               >
-                <div className="flex items-stretch gap-2">
-                  <input
-                    autoFocus
-                    value={roleInput}
-                    onChange={(e) => setRoleInput(e.target.value)}
-                    onKeyDown={(e) => {
-                      // Enter / comma adds a role chip without leaving the step,
-                      // so people targeting several titles can list them all.
-                      if (e.key === "Enter" || e.key === ",") {
-                        e.preventDefault();
-                        addRole(roleInput);
-                      }
-                    }}
-                    placeholder={translate("e.g. Product Manager")}
-                    aria-label={translate("Target role")}
-                    className="w-full rounded-2xl border border-[#0A2647]/15 bg-white/80 px-5 py-4 text-center text-xl text-[#0A2647] shadow-sm outline-none backdrop-blur transition-shadow placeholder:text-[#0A2647]/35 focus:border-[#0A2647]/40 focus:shadow-md"
-                  />
-                  <button
-                    type="button"
-                    onClick={() => addRole(roleInput)}
-                    disabled={!roleInput.trim()}
-                    className="shrink-0 rounded-2xl border border-[#0A2647]/15 bg-white/70 px-4 text-sm font-semibold text-[#0A2647] transition-colors hover:bg-white disabled:cursor-not-allowed disabled:opacity-40 focus-visible:outline-none"
-                  >
-                    {translate("Add")}
-                  </button>
+                <div className="relative">
+                  <div className="flex items-stretch gap-2">
+                    <div className="relative w-full">
+                      <input
+                        autoFocus
+                        value={roleInput}
+                        role="combobox"
+                        aria-expanded={roleOpen && roleMatches.length > 0}
+                        aria-controls="role-options"
+                        aria-autocomplete="list"
+                        aria-activedescendant={
+                          roleHighlight >= 0 && roleHighlight < roleMatches.length
+                            ? `role-option-${roleHighlight}`
+                            : undefined
+                        }
+                        onChange={(e) => {
+                          setRoleInput(e.target.value);
+                          setRoleOpen(true);
+                          setRoleHighlight(-1);
+                        }}
+                        onFocus={() => setRoleOpen(true)}
+                        onBlur={() => {
+                          // Delay so a mousedown on an option still lands.
+                          window.setTimeout(() => setRoleOpen(false), 120);
+                        }}
+                        onKeyDown={(e) => {
+                          if (e.key === "ArrowDown") {
+                            e.preventDefault();
+                            setRoleOpen(true);
+                            setRoleHighlight((h) => Math.min(h + 1, roleMatches.length - 1));
+                          } else if (e.key === "ArrowUp") {
+                            e.preventDefault();
+                            setRoleHighlight((h) => Math.max(h - 1, -1));
+                          } else if (e.key === "Escape") {
+                            setRoleOpen(false);
+                            setRoleHighlight(-1);
+                          } else if (e.key === "Enter" || e.key === ",") {
+                            // Enter adds the highlighted option or the typed text as a
+                            // chip; with nothing typed, Enter falls through to the form
+                            // submit and just continues (the question is optional).
+                            if (roleOpen && roleHighlight >= 0 && roleHighlight < roleMatches.length) {
+                              e.preventDefault();
+                              addRole(roleMatches[roleHighlight]);
+                            } else if (roleInput.trim()) {
+                              e.preventDefault();
+                              addRole(roleInput);
+                            } else if (e.key === ",") {
+                              e.preventDefault();
+                            }
+                          }
+                        }}
+                        placeholder={translate("e.g. Product Manager")}
+                        aria-label={translate("Target role")}
+                        className="w-full rounded-2xl border border-[#0A2647]/15 bg-white/80 py-4 pe-11 ps-5 text-center text-xl text-[#0A2647] shadow-sm outline-none backdrop-blur transition-shadow placeholder:text-[#0A2647]/35 focus:border-[#0A2647]/40 focus:shadow-md"
+                      />
+                      <button
+                        type="button"
+                        tabIndex={-1}
+                        aria-label={translate("Show role suggestions")}
+                        onMouseDown={(e) => {
+                          e.preventDefault();
+                          setRoleOpen((o) => !o);
+                        }}
+                        className="absolute end-3 top-1/2 grid h-8 w-8 -translate-y-1/2 place-items-center rounded-full text-[#0A2647]/40 transition-colors hover:bg-[#0A2647]/5 hover:text-[#0A2647] focus-visible:outline-none"
+                      >
+                        <ChevronDown
+                          className={`h-5 w-5 transition-transform ${roleOpen ? "rotate-180" : ""}`}
+                          strokeWidth={1.75}
+                        />
+                      </button>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => addRole(roleInput)}
+                      disabled={!roleInput.trim()}
+                      className="shrink-0 rounded-2xl border border-[#0A2647]/15 bg-white/70 px-4 text-sm font-semibold text-[#0A2647] transition-colors hover:bg-white disabled:cursor-not-allowed disabled:opacity-40 focus-visible:outline-none"
+                    >
+                      {translate("Add")}
+                    </button>
+                  </div>
+
+                  {/* Dropdown of common roles — filtered as you type, free text still wins. */}
+                  {roleOpen && roleMatches.length > 0 && (
+                    <ul
+                      id="role-options"
+                      role="listbox"
+                      aria-label={translate("Common roles")}
+                      className="absolute inset-x-0 top-full z-20 mt-2 max-h-60 overflow-y-auto rounded-2xl border border-[#0A2647]/10 bg-white py-1.5 text-start shadow-xl"
+                    >
+                      {roleMatches.map((o, i) => (
+                        <li
+                          key={o}
+                          id={`role-option-${i}`}
+                          role="option"
+                          aria-selected={i === roleHighlight}
+                          onMouseDown={(e) => {
+                            // mousedown (not click) so the input's blur doesn't close
+                            // the list before the selection registers.
+                            e.preventDefault();
+                            addRole(o);
+                          }}
+                          onMouseEnter={() => setRoleHighlight(i)}
+                          className={`cursor-pointer px-4 py-2.5 text-sm transition-colors ${
+                            i === roleHighlight ? "bg-[#B8860B]/10 text-[#0A2647]" : "text-[#0A2647]/75"
+                          }`}
+                        >
+                          {translate(o)}
+                        </li>
+                      ))}
+                    </ul>
+                  )}
                 </div>
 
                 {roles.length > 0 && (
@@ -499,39 +725,19 @@ export function BuildOnboarding({ embedded = false }: { embedded?: boolean } = {
                   </div>
                 )}
 
-                <div className="mt-5 flex flex-wrap justify-center gap-2">
-                  {ROLE_SUGGESTIONS.filter((s) => !roles.some((r) => r.toLowerCase() === s.toLowerCase())).map((s) => (
-                    <button
-                      key={s}
-                      type="button"
-                      onClick={() => addRole(s)}
-                      className="rounded-full border border-[#0A2647]/12 bg-white/60 px-3.5 py-1.5 text-sm text-[#0A2647]/75 transition-colors hover:border-[#0A2647]/30 hover:bg-white focus-visible:outline-none"
-                    >
-                      + {translate(s)}
-                    </button>
-                  ))}
-                </div>
                 <p className="mt-3 text-xs text-[#0A2647]/45">
                   {translate("These are just examples — type any role. You can change these anytime.")}
                 </p>
                 <div className="mt-8 flex items-center justify-center gap-3">
-                  <BackButton onClick={() => go("path")} />
+                  <BackButton onClick={() => go("start")} />
                   <button
                     type="submit"
-                    disabled={!roles.length && !roleInput.trim()}
-                    className="inline-flex items-center gap-2 rounded-full bg-[#D4A83F] px-7 py-3.5 text-sm font-semibold text-[#0A2647] transition-all hover:-translate-y-0.5 disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:translate-y-0 focus-visible:outline-none"
+                    className="inline-flex items-center gap-2 rounded-full bg-[#D4A83F] px-7 py-3.5 text-sm font-semibold text-[#0A2647] transition-all hover:-translate-y-0.5 hover:shadow-md focus-visible:outline-none"
                   >
-                    {translate("Continue")}
+                    {roles.length || roleInput.trim() ? translate("Continue") : translate("Skip for now")}
                     <ArrowRight className="h-4 w-4" strokeWidth={1.75} />
                   </button>
                 </div>
-                <button
-                  type="button"
-                  onClick={() => go("goal")}
-                  className="mt-4 text-sm font-medium text-[#0A2647]/50 underline-offset-4 transition-colors hover:text-[#0A2647] hover:underline focus-visible:outline-none"
-                >
-                  {translate("Skip for now")}
-                </button>
               </form>
             </motion.div>
           )}
@@ -644,7 +850,7 @@ export function BuildOnboarding({ embedded = false }: { embedded?: boolean } = {
             </motion.div>
           )}
 
-          {/* ---------- Q4: TEMPLATE ---------- */}
+          {/* ---------- Q4: TEMPLATE (last question — hands off directly) ---------- */}
           {step === "template" && (
             <motion.div key="template" {...fade} className="w-full">
               <StepLabel step="template" />
@@ -677,62 +883,12 @@ export function BuildOnboarding({ embedded = false }: { embedded?: boolean } = {
               <div className="mt-8 flex items-center justify-center gap-3">
                 <BackButton onClick={() => go("experience")} />
                 <button
-                  onClick={() => go("method")}
+                  onClick={() => finish()}
                   className="group inline-flex items-center gap-2 rounded-full bg-[#D4A83F] px-7 py-3.5 text-sm font-semibold text-[#0A2647] transition-all hover:-translate-y-0.5 hover:shadow-md focus-visible:outline-none"
                 >
-                  {translate("Continue")}
+                  {translate("Create my first draft")}
                   <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-1" strokeWidth={1.75} />
                 </button>
-              </div>
-            </motion.div>
-          )}
-
-          {/* ---------- Q5: METHOD ---------- */}
-          {step === "method" && (
-            <motion.div key="method" {...fade} className="w-full">
-              <StepLabel step="method" />
-              <h2 className="mt-4 text-balance font-serif text-3xl text-[#0A2647] sm:text-4xl md:text-5xl">
-                {translate("How would you like to start?")}
-              </h2>
-              <div className="mx-auto mt-8 grid w-full max-w-md gap-3">
-                {/* From-scratch path: chat coach or the manual builder. Uploading an
-                    existing CV is its own fork up front ("I have an existing CV"),
-                    so we deliberately don't repeat it here — that duplicate just
-                    confused people who already chose to build from scratch. */}
-                <MethodCard
-                  icon={<MessageSquareText className="h-5 w-5" strokeWidth={1.75} />}
-                  title={translate("Answer a few questions")}
-                  desc={translate("Chat with your coach — it writes each section as you talk.")}
-                  badge={translate("Recommended")}
-                  onClick={() => finish("chat", "/build/chat", translate("Putting your first draft together…"))}
-                />
-                <MethodCard
-                  icon={<Mic className="h-5 w-5" strokeWidth={1.75} />}
-                  title={translate("Talk it out")}
-                  desc={translate("Have a real voice conversation — it builds your CV as you speak.")}
-                  badge={translate("New")}
-                  onClick={() => {
-                    seedRole();
-                    track("build_onboarding_completed", {
-                      method: "voice",
-                      role: primaryRole || null,
-                      roles: rolesLabel || null,
-                      goal,
-                      experience,
-                      template,
-                    });
-                    router.push("/build/voice");
-                  }}
-                />
-                <MethodCard
-                  icon={<PencilLine className="h-5 w-5" strokeWidth={1.75} />}
-                  title={translate("Start from a blank template")}
-                  desc={translate("Fill it in yourself, step by step.")}
-                  onClick={() => finish("manual", "/builder", translate("Opening your builder…"))}
-                />
-              </div>
-              <div className="mt-8 flex justify-center">
-                <BackButton onClick={() => go("template")} />
               </div>
             </motion.div>
           )}

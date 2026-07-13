@@ -7,6 +7,10 @@
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
 
+/** localStorage key holding the id of the chat session the builder resumes on
+ * open. Shared so the onboarding funnel can clear it when starting fresh. */
+export const CHAT_ACTIVE_SESSION_KEY = "chat-active-session-id";
+
 export type ChatToolEvent = {
   id: string;
   label: string;
