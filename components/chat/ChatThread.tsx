@@ -108,45 +108,56 @@ export function ChatThread({
           assistant bubbles, so mask it in Clarity replays. Behavior is still
           captured via custom events (chat_message_sent, chat_tool_applied). */}
       <div className="flex flex-col gap-4" data-clarity-mask="true">
-        {messages.map((m) =>
-          m.role === "user" ? (
-            <div key={m.id} className="flex justify-end">
-              {/* dir=auto: Hebrew/Arabic answers align right within the bubble */}
-              <div
-                dir="auto"
-                className={`max-w-[85%] rounded-2xl rounded-br-md px-4 py-2.5 text-[15px] leading-relaxed whitespace-pre-wrap ${
-                  light ? "bg-stone-100 text-[#1a1a1a]" : "bg-white text-[#1a1a1a]"
-                }`}
-              >
-                {m.display ?? m.content}
+        {messages.map((m) => {
+          if (m.role === "user") {
+            return (
+              <div key={m.id} className="flex justify-end">
+                {/* dir=auto: Hebrew/Arabic answers align right within the bubble */}
+                <div
+                  dir="auto"
+                  className={`max-w-[85%] rounded-2xl rounded-br-md px-4 py-2.5 text-[15px] leading-relaxed whitespace-pre-wrap ${
+                    light ? "bg-stone-100 text-[#1a1a1a]" : "bg-white text-[#1a1a1a]"
+                  }`}
+                >
+                  {m.display ?? m.content}
+                </div>
               </div>
-            </div>
-          ) : (
+            );
+          }
+          // Only the actively-streaming last turn shows the thinking dots. A
+          // SETTLED assistant message with empty content (e.g. a turn that
+          // applied tool calls but emitted no closing text) must never show a
+          // perpetual "typing" indicator — that reads as "stuck". Its tool
+          // chips carry the meaning instead.
+          const isThinking = streaming && m.id === lastMessage?.id;
+          return (
             <div key={m.id} className="flex justify-start">
               <div className="max-w-[92%]">
                 {/* Enhancv-style: assistant speaks as plain text (no bubble) in
                     the light studio; keeps the glass bubble in the dark shells. */}
-                <div
-                  dir="auto"
-                  className={`text-[15px] leading-relaxed whitespace-pre-wrap ${
-                    light
-                      ? "text-[#1f2937] px-0.5"
-                      : "rounded-2xl rounded-bl-md bg-white/10 border border-glass-border text-white px-4 py-2.5"
-                  }`}
-                >
-                  {m.content ? renderInlineBold(m.content) : (
-                    <span className="inline-flex gap-1 items-center py-1" aria-label={t("Thinking")}>
-                      <span className={`h-1.5 w-1.5 rounded-full animate-bounce [animation-delay:0ms] ${light ? "bg-[#0A2647]/50" : "bg-white/70"}`} />
-                      <span className={`h-1.5 w-1.5 rounded-full animate-bounce [animation-delay:150ms] ${light ? "bg-[#0A2647]/50" : "bg-white/70"}`} />
-                      <span className={`h-1.5 w-1.5 rounded-full animate-bounce [animation-delay:300ms] ${light ? "bg-[#0A2647]/50" : "bg-white/70"}`} />
-                    </span>
-                  )}
-                </div>
+                {(m.content || isThinking) && (
+                  <div
+                    dir="auto"
+                    className={`text-[15px] leading-relaxed whitespace-pre-wrap ${
+                      light
+                        ? "text-[#1f2937] px-0.5"
+                        : "rounded-2xl rounded-bl-md bg-white/10 border border-glass-border text-white px-4 py-2.5"
+                    }`}
+                  >
+                    {m.content ? renderInlineBold(m.content) : (
+                      <span className="inline-flex gap-1 items-center py-1" aria-label={t("Thinking")}>
+                        <span className={`h-1.5 w-1.5 rounded-full animate-bounce [animation-delay:0ms] ${light ? "bg-[#0A2647]/50" : "bg-white/70"}`} />
+                        <span className={`h-1.5 w-1.5 rounded-full animate-bounce [animation-delay:150ms] ${light ? "bg-[#0A2647]/50" : "bg-white/70"}`} />
+                        <span className={`h-1.5 w-1.5 rounded-full animate-bounce [animation-delay:300ms] ${light ? "bg-[#0A2647]/50" : "bg-white/70"}`} />
+                      </span>
+                    )}
+                  </div>
+                )}
                 <ToolChips tools={m.tools} theme={theme} />
               </div>
             </div>
-          )
-        )}
+          );
+        })}
         {messages.length <= 1 && !streaming ? emptyExtras : null}
         {streaming ? <span className="sr-only">{t("Assistant is typing")}</span> : null}
       </div>
