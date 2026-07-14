@@ -27,7 +27,8 @@ import { Logo } from "@/components/Logo";
 import { useResumeStore } from "@/store/useResumeStore";
 import { useChatBuilderStore, CHAT_ACTIVE_SESSION_KEY } from "@/stores/chatBuilderStore";
 import { useFlashSaleStore } from "@/stores/flashSaleStore";
-import { applyCvToolCall, pendingToolLabel } from "@/lib/chat/cvTools";
+import { applyCvToolCall, pendingToolLabel, DESIGN_TEMPLATES, DESIGN_COLORS } from "@/lib/chat/cvTools";
+import { densityInlineVars, densityClasses, densityOverrideCss } from "@/lib/builder/density";
 import { chatGreeting, cvUploadIntake, isPlaceholderSummary } from "@/lib/chat/prompts";
 import { convertToPreviewData } from "@/lib/resumeDataConverter";
 import { generateId, type ResumeData } from "@/types/resume";
@@ -93,6 +94,11 @@ export function StudioBuilder() {
   const [unseenUpdates, setUnseenUpdates] = useState(0);
   const [selectedTemplate, setSelectedTemplate] = useState<BuilderTemplateId>("ivy-league");
   const [selectedColor, setSelectedColor] = useState<ThemeColor>("indigo");
+  // Font-size + spacing density (1-10, 5 = normal). Lifted out of
+  // SmartResumePreview so the AI's set_design tool can tune them after reading
+  // a CV — and so switching chat sessions can restore them.
+  const [fontLevel, setFontLevel] = useState(5);
+  const [spacingLevel, setSpacingLevel] = useState(5);
   const [docControls, setDocControls] = useState(false);
   const [galleryOpen, setGalleryOpen] = useState(false);
   const [scoreOpen, setScoreOpen] = useState(false);
@@ -323,6 +329,23 @@ export function StudioBuilder() {
           setResumeData(applyCvToolCall(current, evt.name, evt.input));
           resolvePendingTool(assistantId, evt.label);
           track("chat_tool_applied", { tool: evt.name });
+          if (mobileTabRef.current === "chat") setUnseenUpdates((n) => n + 1);
+        } else if (evt.type === "design") {
+          // The agent picked a format that fits the CV — apply it live. Values
+          // are server-validated; re-guard against the allow-lists so a bad
+          // frame can never wedge an invalid template/color into the preview.
+          if (evt.template && (DESIGN_TEMPLATES as readonly string[]).includes(evt.template)) {
+            setSelectedTemplate(evt.template as BuilderTemplateId);
+          }
+          if (evt.accentColor && (DESIGN_COLORS as readonly string[]).includes(evt.accentColor)) {
+            setSelectedColor(evt.accentColor as ThemeColor);
+          }
+          if (typeof evt.fontLevel === "number") {
+            setFontLevel(Math.min(10, Math.max(1, Math.round(evt.fontLevel))));
+          }
+          if (typeof evt.spacingLevel === "number") {
+            setSpacingLevel(Math.min(10, Math.max(1, Math.round(evt.spacingLevel))));
+          }
           if (mobileTabRef.current === "chat") setUnseenUpdates((n) => n + 1);
         } else if (evt.type === "resume") {
           setResumeData(evt.resumeData);
@@ -941,6 +964,10 @@ export function StudioBuilder() {
               data={docData}
               templateId={selectedTemplate}
               themeColor={selectedColor}
+              fontLevel={fontLevel}
+              spacingLevel={spacingLevel}
+              onFontLevelChange={setFontLevel}
+              onSpacingLevelChange={setSpacingLevel}
               showToolbar={docControls}
               hideTemplateSelector
               onTemplateChange={setSelectedTemplate}
@@ -1065,7 +1092,17 @@ export function StudioBuilder() {
       <div aria-hidden className="fixed -left-[10000px] top-0 pointer-events-none">
         <div ref={exportRef} style={{ width: 794, background: "#ffffff" }}>
           {!isEmpty ? (
-            <ResumePreview data={previewData} templateId={selectedTemplate} themeColor={selectedColor} />
+            <>
+              {/* Same font/spacing density the live preview shows, so the
+                  downloaded PDF is WYSIWYG (shared math in lib/builder/density). */}
+              <style dangerouslySetInnerHTML={{ __html: densityOverrideCss(fontLevel, spacingLevel) }} />
+              <div
+                className={`smart-resume-override ${densityClasses(fontLevel, spacingLevel)}`}
+                style={densityInlineVars(fontLevel, spacingLevel)}
+              >
+                <ResumePreview data={previewData} templateId={selectedTemplate} themeColor={selectedColor} />
+              </div>
+            </>
           ) : null}
         </div>
       </div>

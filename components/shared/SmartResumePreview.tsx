@@ -10,6 +10,7 @@ import {
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useT } from "@/lib/i18n/LanguageProvider";
+import { densityInlineVars, densityClasses, densityOverrideCss } from "@/lib/builder/density";
 
 // A4 dimensions at 96 DPI
 const A4_WIDTH_PX = 794;
@@ -60,6 +61,14 @@ interface SmartResumePreviewProps {
   hideTemplateSelector?: boolean;
   onTemplateChange?: (templateId: BuilderTemplateId) => void;
   onColorChange?: (color: ThemeColor) => void;
+  /** Controlled font-size level (1-10). When provided, the slider reflects and
+   *  reports it via onFontLevelChange instead of using internal state — lets
+   *  the AI builder set density after reading a CV. */
+  fontLevel?: number;
+  /** Controlled spacing level (1-10). See fontLevel. */
+  spacingLevel?: number;
+  onFontLevelChange?: (level: number) => void;
+  onSpacingLevelChange?: (level: number) => void;
   onClose?: () => void;
   onEdit?: () => void;
   className?: string;
@@ -86,6 +95,10 @@ export function SmartResumePreview({
   hideTemplateSelector = false,
   onTemplateChange,
   onColorChange,
+  fontLevel: fontLevelProp,
+  spacingLevel: spacingLevelProp,
+  onFontLevelChange,
+  onSpacingLevelChange,
   onClose,
   onEdit,
   className = "",
@@ -103,9 +116,22 @@ export function SmartResumePreview({
   const [showTemplateDropdown, setShowTemplateDropdown] = useState(false);
   const [showColorPicker, setShowColorPicker] = useState(false);
   
-  // GRANULAR LAYOUT CONTROLS (1 = Small/Tight, 10 = Large/Spacious)
-  const [fontLevel, setFontLevel] = useState(5);
-  const [spacingLevel, setSpacingLevel] = useState(5);
+  // GRANULAR LAYOUT CONTROLS (1 = Small/Tight, 10 = Large/Spacious).
+  // Controllable: when fontLevel/spacingLevel props are passed the parent owns
+  // them (so the AI builder can set density after reading a CV); otherwise the
+  // component keeps its own state. Mirrors the template/color pattern above.
+  const [localFontLevel, setLocalFontLevel] = useState(5);
+  const [localSpacingLevel, setLocalSpacingLevel] = useState(5);
+  const fontLevel = fontLevelProp ?? localFontLevel;
+  const spacingLevel = spacingLevelProp ?? localSpacingLevel;
+  const setFontLevel = (v: number) => {
+    setLocalFontLevel(v);
+    onFontLevelChange?.(v);
+  };
+  const setSpacingLevel = (v: number) => {
+    setLocalSpacingLevel(v);
+    onSpacingLevelChange?.(v);
+  };
   const [isOverflowing, setIsOverflowing] = useState(false);
 
   // Determine active values
@@ -141,123 +167,8 @@ export function SmartResumePreview({
     setSpacingLevel(2);
   };
 
-  // Calculate dynamic styles based on slider levels - 10 distinct gradual levels with bigger jumps
-  const getDynamicStyles = (): React.CSSProperties => {
-    // Font size: Range from 8px (level 1) to 14px (level 10) - 10 distinct values
-    // Formula: 8 + (level - 1) * (14 - 8) / 9 = 8 + (level - 1) * 0.667
-    const fontSize = 8 + (fontLevel - 1) * (6 / 9); // Ensures level 1 = 8, level 10 = 14
-    
-    // Line height: Bigger jumps - Range from 1.1 (level 1) to 1.9 (level 10)
-    const lineHeight = 1.1 + (spacingLevel - 1) * (0.8 / 9);
-    
-    // Section gaps: Bigger jumps - Range from 2px (level 1, tighter) to 32px (level 10)
-    const sectionGap = 2 + (spacingLevel - 1) * (30 / 9);
-    
-    // Paragraph gaps: More pronounced - Range from 0px (level 1) to 16px (level 10)
-    const paragraphGap = (spacingLevel - 1) * (16 / 9);
-    
-    // Item gaps: Bigger jumps - Range from 0.5px (level 1) to 8px (level 10)
-    const itemGap = 0.5 + (spacingLevel - 1) * (7.5 / 9);
-    
-    // Heading scales (proportional to base font)
-    const h1Size = fontSize * 2.2;
-    const h2Size = fontSize * 1.4;
-    const h3Size = fontSize * 1.2;
-
-    return {
-      fontSize: `${fontSize}px`,
-      lineHeight: lineHeight,
-      // CSS custom properties for child elements
-      '--base-font-size': `${fontSize}px`,
-      '--line-height': `${lineHeight}`,
-      '--section-gap': `${sectionGap}px`,
-      '--item-gap': `${itemGap}px`,
-      '--paragraph-gap': `${paragraphGap}px`,
-      '--h1-size': `${h1Size}px`,
-      '--h2-size': `${h2Size}px`,
-      '--h3-size': `${h3Size}px`,
-      '--p-margin': `${paragraphGap}px`,
-      '--li-margin': `${itemGap}px`,
-    } as React.CSSProperties;
-  };
-
-  // Generate CSS classes for dynamic styling with 10 distinct levels
-  // Note: Inline styles from getDynamicStyles() take precedence, this is for fallback
-  const getDynamicClasses = (): string => {
-    // Use the same formulas as getDynamicStyles() for consistency
-    // Font size: Range from 8pt (level 1) to 14pt (level 10) - 10 distinct values
-    const baseFontSize = 8 + (fontLevel - 1) * (6 / 9);
-    const h1Size = baseFontSize * 2.2;
-    const h2Size = baseFontSize * 1.4;
-    const h3Size = baseFontSize * 1.2;
-    
-    // Line height: Range from 1.1 (level 1) to 1.8 (level 10) - 10 distinct values
-    const lineHeight = 1.1 + (spacingLevel - 1) * (0.7 / 9);
-    
-    // Spacing values: Range from 4px (level 1) to 24px (level 10) - 10 distinct values
-    const sectionGap = 4 + (spacingLevel - 1) * (20 / 9);
-    const pMargin = spacingLevel * 0.5;
-    const liMargin = spacingLevel * 0.3;
-    const ulMargin = sectionGap * 0.25;
-    
-    // Create Tailwind classes with calculated values (using CSS custom properties for precision)
-    // Since inline styles handle the main styling, these classes are minimal
-    const compactExtras = fontLevel <= 2 && spacingLevel <= 2
-      ? '[&_aside]:!py-2 [&_main]:!py-2 [&_header]:!mb-1 [&_[style*="padding"]]:!p-2'
-      : '';
-
-    return compactExtras.trim();
-  };
-
-  // Generate CSS overrides that use !important to bypass template inline styles
-  const getStyleOverrides = (): string => {
-    const fs = 8 + (fontLevel - 1) * (6 / 9);
-    // Line height: Bigger jumps - from 1.1 (level 1) to 1.9 (level 10)
-    const lh = 1.1 + (spacingLevel - 1) * (0.8 / 9);
-    // Section gaps: Bigger jumps - from 2px (level 1, tighter) to 32px (level 10)
-    const secGap = 2 + (spacingLevel - 1) * (30 / 9);
-    // Item gaps: Bigger jumps - from 0.5px (level 1) to 8px (level 10)
-    const itemGap = 0.5 + (spacingLevel - 1) * (7.5 / 9);
-    // Paragraph gaps: More pronounced - from 0px (level 1) to 16px (level 10)
-    const pGap = (spacingLevel - 1) * (16 / 9);
-    // Page padding: Bigger jumps - from 6mm (level 1, tighter) to 20mm (level 10)
-    const safePad = 6 + (spacingLevel - 1) * (14 / 9);
-
-    return `
-      .smart-resume-override p,
-      .smart-resume-override li,
-      .smart-resume-override td {
-        font-size: ${fs}px !important;
-        line-height: ${lh} !important;
-      }
-      .smart-resume-override p {
-        margin-bottom: ${pGap}px !important;
-        margin-top: 0 !important;
-      }
-      .smart-resume-override li {
-        margin-bottom: ${itemGap}px !important;
-      }
-      .smart-resume-override ul,
-      .smart-resume-override ol {
-        margin-top: ${itemGap}px !important;
-        margin-bottom: ${itemGap}px !important;
-      }
-      .smart-resume-override .a4-safe-area {
-        padding: ${safePad}mm !important;
-      }
-      .smart-resume-override div[style*="margin-bottom"],
-      .smart-resume-override section[style*="margin-bottom"],
-      .smart-resume-override [class*="section"] {
-        margin-bottom: ${secGap}px !important;
-      }
-      .smart-resume-override h1,
-      .smart-resume-override h2,
-      .smart-resume-override h3 {
-        margin-bottom: ${secGap * 0.6}px !important;
-        margin-top: ${secGap * 0.8}px !important;
-      }
-    `;
-  };
+  // Font/spacing density styles are shared with the PDF-export render (see
+  // lib/builder/density.ts) so the preview and the download stay identical.
 
   // Handle template change
   const handleTemplateChange = (newTemplateId: BuilderTemplateId) => {
@@ -445,7 +356,7 @@ export function SmartResumePreview({
       )}
 
       {/* Dynamic style overrides for font/spacing sliders */}
-      <style dangerouslySetInnerHTML={{ __html: getStyleOverrides() }} />
+      <style dangerouslySetInnerHTML={{ __html: densityOverrideCss(fontLevel, spacingLevel) }} />
 
       {/* PREVIEW AREA */}
       <div
@@ -470,11 +381,11 @@ export function SmartResumePreview({
             className={cn(
               "bg-white shadow-xl transition-all duration-200 ease-out relative",
               isOverflowing && "ring-4 ring-amber-400/40",
-              getDynamicClasses()
+              densityClasses(fontLevel, spacingLevel)
             )}
           >
             {/* Content wrapper for overflow measurement */}
-            <div ref={contentRef} className="smart-resume-override" style={getDynamicStyles()}>
+            <div ref={contentRef} className="smart-resume-override" style={densityInlineVars(fontLevel, spacingLevel)}>
               <ResumePreview
                 data={data}
                 templateId={activeTemplate}
