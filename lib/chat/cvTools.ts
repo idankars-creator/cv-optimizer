@@ -31,7 +31,81 @@ export type CvToolName =
   | "add_certification"
   | "remove_certification"
   | "add_custom_section"
-  | "remove_custom_section";
+  | "remove_custom_section"
+  | "set_design";
+
+// Design targets the agent can set via set_design. Kept as plain string
+// literals (not imported from the "use client" BuilderContext) so this module
+// stays usable in the server route. Must mirror BuilderTemplateId / ThemeColor.
+export const DESIGN_TEMPLATES = [
+  "modern-sidebar",
+  "ivy-league",
+  "minimalist",
+  "executive",
+  "techie",
+  "creative",
+  "startup",
+  "international",
+  "aurora",
+  "banner",
+  "spotlight",
+  "ledger",
+  "devfolio",
+  "canvas",
+  "timeline",
+  "double-column",
+  "compact",
+  "photo-left",
+] as const;
+
+export const DESIGN_COLORS = [
+  "indigo",
+  "blue",
+  "purple",
+  "rose",
+  "amber",
+  "slate",
+  "navy",
+  "violet",
+  "orange",
+  "black",
+] as const;
+
+export type DesignPatchValidated = {
+  template?: (typeof DESIGN_TEMPLATES)[number];
+  accentColor?: (typeof DESIGN_COLORS)[number];
+  fontLevel?: number;
+  spacingLevel?: number;
+};
+
+/**
+ * Validate a set_design tool call into a safe design patch. Returns null when
+ * nothing usable was provided, so a confused model can never push a broken
+ * template id or an out-of-range slider. Design lives OUTSIDE ResumeData
+ * (it's client view state), so it's applied via a dedicated "design" SSE
+ * event rather than the applyCvToolCall reducer.
+ */
+export function sanitizeDesign(input: Record<string, unknown>): DesignPatchValidated | null {
+  const out: DesignPatchValidated = {};
+  const tmpl = s(input.template);
+  if (tmpl && (DESIGN_TEMPLATES as readonly string[]).includes(tmpl)) {
+    out.template = tmpl as (typeof DESIGN_TEMPLATES)[number];
+  }
+  const color = s(input.accentColor);
+  if (color && (DESIGN_COLORS as readonly string[]).includes(color)) {
+    out.accentColor = color as (typeof DESIGN_COLORS)[number];
+  }
+  const clampLevel = (v: unknown): number | undefined => {
+    const n = Number(v);
+    if (!Number.isFinite(n)) return undefined;
+    return Math.min(10, Math.max(1, Math.round(n)));
+  };
+  const font = clampLevel(input.fontLevel);
+  if (font !== undefined) out.fontLevel = font;
+  const spacing = clampLevel(input.spacingLevel);
+  if (spacing !== undefined) out.spacingLevel = spacing;
+  return Object.keys(out).length > 0 ? out : null;
+}
 
 export type CvToolCall = { name: CvToolName; input: Record<string, unknown> };
 
@@ -256,6 +330,40 @@ export const CV_TOOLS = [
       type: "object" as const,
       properties: { index: { type: "integer" as const } },
       required: ["index"],
+    },
+  },
+  {
+    name: "set_design",
+    description:
+      "Set the CV's visual format — template, accent color, and density — so the document looks polished, not just the default. The template also picks the font family. Call this ONCE after importing an uploaded CV or once there's enough content, and again only if the user asks for a different look. Choose a template that fits the person's field, an accent color that's tasteful for it, and font/spacing levels (1=tight/small … 10=airy/large; 4-6 is normal) that keep the CV to one page — tighten when there's a lot of content.",
+    input_schema: {
+      type: "object" as const,
+      properties: {
+        template: {
+          type: "string" as const,
+          enum: [...DESIGN_TEMPLATES],
+          description:
+            "Pick by field: conservative (finance, law, academia, ops) → ivy-league, ledger, spotlight, or executive. Software/data/engineering → techie, devfolio, or modern-sidebar. Design/marketing/creative → creative, canvas, aurora, or banner. General professional → modern-sidebar, double-column, or minimalist. Compact when content is dense.",
+        },
+        accentColor: {
+          type: "string" as const,
+          enum: [...DESIGN_COLORS],
+          description:
+            "Tasteful for the field: navy/slate/black for conservative roles, indigo/blue/violet for tech, amber/rose/orange for creative. When unsure, navy or slate.",
+        },
+        fontLevel: {
+          type: "integer" as const,
+          minimum: 1,
+          maximum: 10,
+          description: "Text size, 1 (small) – 10 (large). 5 is normal; drop to 3-4 for a content-heavy CV.",
+        },
+        spacingLevel: {
+          type: "integer" as const,
+          minimum: 1,
+          maximum: 10,
+          description: "Whitespace, 1 (tight) – 10 (airy). 5 is normal; drop to 3-4 to fit more on one page.",
+        },
+      },
     },
   },
 ];
@@ -530,6 +638,8 @@ export function describeToolCall(name: string, input: Record<string, unknown>): 
       return `Added "${s(input.title) || "section"}"`;
     case "remove_custom_section":
       return "Removed a section";
+    case "set_design":
+      return "Styled your CV";
     default:
       return "Updated your CV";
   }
@@ -619,6 +729,8 @@ export function pendingToolLabel(name: string): string {
       return "Adding a section…";
     case "remove_custom_section":
       return "Removing a section…";
+    case "set_design":
+      return "Styling your CV…";
     default:
       return "Updating your CV…";
   }

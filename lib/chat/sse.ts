@@ -5,11 +5,19 @@
 
 import type { ResumeData } from "@/types/resume";
 
+export type DesignPatch = {
+  template?: string;
+  accentColor?: string;
+  fontLevel?: number;
+  spacingLevel?: number;
+};
+
 export type SseEvent =
   | { type: "text"; text: string }
   | { type: "tool_start"; name: string }
   | { type: "tool_noop"; name: string }
   | { type: "tool"; name: string; input: Record<string, unknown>; label: string }
+  | ({ type: "design" } & DesignPatch)
   | { type: "resume"; resumeData: ResumeData }
   | { type: "done" }
   | { type: "error"; error: string };

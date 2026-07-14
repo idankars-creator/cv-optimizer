@@ -3,7 +3,7 @@ import Anthropic from "@anthropic-ai/sdk";
 import { auth } from "@clerk/nextjs/server";
 import type { ResumeData } from "@/types/resume";
 import { initialResumeState } from "@/types/resume";
-import { CV_TOOLS, applyCvToolCall, describeToolCall } from "@/lib/chat/cvTools";
+import { CV_TOOLS, applyCvToolCall, describeToolCall, sanitizeDesign } from "@/lib/chat/cvTools";
 import { buildChatSystemPrompt } from "@/lib/chat/prompts";
 import { chatRateLimit } from "@/lib/chat/rateLimit";
 
@@ -16,7 +16,13 @@ const MAX_HISTORY_MESSAGES = 60;
 // Big enough for an uploaded-CV turn (parse-cv caps extraction at 20k chars
 // plus the framing text around it).
 const MAX_MESSAGE_CHARS = 24_000;
-const MAX_MODEL_ROUNDS = 6; // tool-use loop guard within one request
+const MAX_MODEL_ROUNDS = 8; // tool-use loop guard within one request
+// A full-CV import emits many tool calls in one turn. 2000 was far too small —
+// the model ran out of output budget mid-import (stop_reason "max_tokens") and
+// the loop broke, so the CV was only half-read ("stuck mid reading"). 6000 lets
+// a normal import finish in a single round; the max_tokens continuation below
+// is the safety net for unusually large CVs.
+const MAX_TOKENS = 6000;
 
 type ChatMessage = { role: "user" | "assistant"; content: string };
 
@@ -113,7 +119,7 @@ export async function POST(request: NextRequest) {
           let roundEmittedText = false;
           const msgStream = anthropic.messages.stream({
             model: "claude-sonnet-4-6",
-            max_tokens: 2000,
+            max_tokens: MAX_TOKENS,
             system,
             messages,
             tools: CV_TOOLS as Anthropic.Tool[],
@@ -122,6 +128,11 @@ export async function POST(request: NextRequest) {
 
           // Track partial tool inputs by content-block index while streaming.
           const toolBuf = new Map<number, { id: string; name: string; json: string }>();
+          // Tool calls that COMPLETED this round (content_block_stop fired).
+          // Used to rebuild a valid assistant turn when a "max_tokens" cutoff
+          // truncates the final block — we replay only the whole calls, drop
+          // the partial, and let the model finish reading on the next round.
+          const roundToolUses: { id: string; name: string; input: Record<string, unknown> }[] = [];
 
           for await (const event of msgStream) {
             if (
@@ -166,11 +177,34 @@ export async function POST(request: NextRequest) {
                 } catch {
                   input = {};
                 }
+                if (buf.name === "set_design") {
+                  // Design isn't part of ResumeData — it's client view state.
+                  // Stream it on a dedicated "design" channel; the chip still
+                  // shows so the user sees the format change happen.
+                  const design = sanitizeDesign(input);
+                  if (design) {
+                    controller.enqueue(sseEncode({ type: "design", ...design }));
+                    controller.enqueue(
+                      sseEncode({
+                        type: "tool",
+                        name: buf.name,
+                        input,
+                        label: describeToolCall(buf.name, input),
+                      })
+                    );
+                    roundToolUses.push({ id: buf.id, name: buf.name, input });
+                  } else {
+                    controller.enqueue(sseEncode({ type: "tool_noop", name: buf.name }));
+                  }
+                  toolBuf.delete(event.index);
+                  continue;
+                }
                 const next = applyCvToolCall(resume, buf.name, input);
                 const applied = next !== resume;
                 resume = next;
                 if (applied) {
                   anyToolApplied = true;
+                  roundToolUses.push({ id: buf.id, name: buf.name, input });
                   controller.enqueue(
                     sseEncode({
                       type: "tool",
@@ -189,20 +223,58 @@ export async function POST(request: NextRequest) {
           }
 
           const final = await msgStream.finalMessage();
-          if (final.stop_reason !== "tool_use") break;
 
-          // Feed tool results back so the model can keep narrating/asking.
-          messages.push({ role: "assistant", content: final.content });
-          messages.push({
-            role: "user",
-            content: final.content
-              .filter((b): b is Anthropic.ToolUseBlock => b.type === "tool_use")
-              .map((b) => ({
-                type: "tool_result" as const,
-                tool_use_id: b.id,
-                content: "Applied. The user can see the change in the live preview.",
+          if (final.stop_reason === "tool_use") {
+            // Normal tool round: every block completed, so echo the model's
+            // turn verbatim and answer each tool call, then let it keep going.
+            messages.push({ role: "assistant", content: final.content });
+            messages.push({
+              role: "user",
+              content: final.content
+                .filter((b): b is Anthropic.ToolUseBlock => b.type === "tool_use")
+                .map((b) => ({
+                  type: "tool_result" as const,
+                  tool_use_id: b.id,
+                  content: "Applied. The user can see the change in the live preview.",
+                })),
+            });
+            continue;
+          }
+
+          if (final.stop_reason === "max_tokens" && roundToolUses.length > 0) {
+            // The model ran out of output budget mid-import — the old code
+            // broke here, leaving the CV half-read. Instead, replay only the
+            // tool calls that fully completed (dropping any truncated trailing
+            // block, which would be an invalid dangling tool_use) and nudge the
+            // model to finish. Its own prior calls stay in context, so it won't
+            // re-add what it already imported.
+            messages.push({
+              role: "assistant",
+              content: roundToolUses.map((tu) => ({
+                type: "tool_use" as const,
+                id: tu.id,
+                name: tu.name,
+                input: tu.input,
               })),
-          });
+            });
+            messages.push({
+              role: "user",
+              content: [
+                ...roundToolUses.map((tu) => ({
+                  type: "tool_result" as const,
+                  tool_use_id: tu.id,
+                  content: "Applied. The user can see the change in the live preview.",
+                })),
+                {
+                  type: "text" as const,
+                  text: "Keep going — import anything from the CV you haven't captured yet, then give a one-line verdict and ask one question.",
+                },
+              ],
+            });
+            continue;
+          }
+
+          break;
         }
 
         if (anyToolApplied) {
