@@ -107,7 +107,7 @@ export function ChatThread({
       {/* Transcript echoes the user's resume content (PII) in both user and
           assistant bubbles, so mask it in Clarity replays. Behavior is still
           captured via custom events (chat_message_sent, chat_tool_applied). */}
-      <div className="flex flex-col gap-4" data-clarity-mask="true">
+      <div className="flex flex-col gap-5" data-clarity-mask="true">
         {messages.map((m) => {
           if (m.role === "user") {
             return (
@@ -132,7 +132,7 @@ export function ChatThread({
           const isThinking = streaming && m.id === lastMessage?.id;
           return (
             <div key={m.id} className="flex justify-start">
-              <div className="max-w-[92%]">
+              <div className="max-w-[46ch]">
                 {/* Enhancv-style: assistant speaks as plain text (no bubble) in
                     the light studio; keeps the glass bubble in the dark shells. */}
                 {(m.content || isThinking) && (

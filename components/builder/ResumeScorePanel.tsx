@@ -166,7 +166,7 @@ export function ResumeScorePanel({
         ) : null}
       </div>
 
-      <div className="flex-1 min-h-0 overflow-y-auto px-4 py-4 space-y-4">
+      <div className="flex-1 min-h-0 overflow-y-auto px-4 py-5 space-y-5">
         {/* Ring + band */}
         <div className="flex items-center gap-4">
           <ScoreRing score={result.overall} band={result.band} />
@@ -211,7 +211,7 @@ export function ResumeScorePanel({
         </button>
 
         {/* Problem list */}
-        <div className="space-y-2">
+        <div className="space-y-2.5">
           <div className="text-[11px] uppercase tracking-[0.14em] text-stone-400">
             {problems.length > 0
               ? problems.length === 1
@@ -230,11 +230,11 @@ export function ResumeScorePanel({
             problems.map((p) => {
               const applying = applyingFixId === p.id;
               return (
-                <div key={p.id} className="rounded-xl border border-stone-200 px-3 py-2.5">
-                  <div className="flex items-start gap-2">
+                <div key={p.id} className="rounded-xl border border-stone-200 px-3.5 py-3">
+                  <div className="flex items-start gap-2.5">
                     <span className={`mt-1.5 h-1.5 w-1.5 rounded-full flex-shrink-0 ${SEVERITY_DOT[p.severity]}`} />
                     <div className="min-w-0 flex-1">
-                      <div className="text-[13px] font-medium text-[#1a1a1a] leading-snug">{p.title}</div>
+                      <div className="text-[13px] font-medium text-[#1a1a1a] leading-relaxed">{p.title}</div>
                       <div className="text-[11px] text-stone-500 mt-0.5 leading-relaxed">{p.detail}</div>
                       {p.fix ? (
                         <button
