@@ -662,6 +662,7 @@ export function StudioBuilder() {
       type="button"
       onClick={onClick}
       disabled={streaming}
+      title={label}
       className={`inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-[13px] transition-colors disabled:opacity-40 ${
         active ? "bg-[#0A2647]/[0.07] text-[#0A2647]" : "text-stone-600 hover:bg-stone-100 hover:text-[#0A2647]"
       }`}
@@ -728,6 +729,7 @@ export function StudioBuilder() {
                 setMobileTab("chat");
               }}
               aria-pressed={chatOpen}
+              title={t("AI Assistant")}
               className={`inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-[13px] font-medium transition-colors ${
                 chatOpen ? "bg-[#0A2647]/[0.07] text-[#0A2647]" : "text-stone-600 hover:bg-stone-100"
               }`}
@@ -756,15 +758,16 @@ export function StudioBuilder() {
             </div>
           </div>
           <div className="flex items-center gap-0.5 flex-shrink-0">
-            <button type="button" disabled aria-label={t("Undo")} className="grid place-items-center h-8 w-8 rounded-lg text-stone-300 cursor-not-allowed">
+            <button type="button" disabled aria-label={t("Undo")} title={t("Undo")} className="grid place-items-center h-8 w-8 rounded-lg text-stone-300 cursor-not-allowed">
               <Undo2 className="h-[15px] w-[15px]" strokeWidth={1.8} />
             </button>
-            <button type="button" disabled aria-label={t("Redo")} className="grid place-items-center h-8 w-8 rounded-lg text-stone-300 cursor-not-allowed">
+            <button type="button" disabled aria-label={t("Redo")} title={t("Redo")} className="grid place-items-center h-8 w-8 rounded-lg text-stone-300 cursor-not-allowed">
               <Redo2 className="h-[15px] w-[15px]" strokeWidth={1.8} />
             </button>
             <button
               type="button"
               onClick={() => setHistoryOpen(true)}
+              title={t("History")}
               className="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-[13px] text-stone-600 hover:bg-stone-100 hover:text-[#0A2647] transition-colors"
             >
               <Clock className="h-[15px] w-[15px]" strokeWidth={1.8} />
@@ -774,6 +777,7 @@ export function StudioBuilder() {
               type="button"
               onClick={onExport}
               disabled={exporting}
+              title={exporting ? t("Exporting…") : t("Export")}
               className="ml-1 inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg text-[13px] font-semibold bg-[#0A2647] text-white hover:bg-[#0d3259] disabled:opacity-60 transition-colors"
             >
               {exporting ? <Loader2 className="h-[15px] w-[15px] animate-spin" /> : <Download className="h-[15px] w-[15px]" strokeWidth={2} />}
